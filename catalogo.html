@@ -8,8 +8,13 @@
   </head>
   <body>
     <nav class="top-nav">
-      <a href="index.html">Rastreo</a>
+      <a href="rastreo.html">Número de rastreo</a>
       <a href="catalogo.html" class="active">Catálogo</a>
+      <span id="navRight" class="nav-right">
+        <span id="navUser" class="nav-user"></span>
+        <a href="#" id="navLogout" class="nav-logout hidden" onclick="doLogout()">Cerrar sesión</a>
+        <a href="index.html" id="navLogin" class="nav-logout hidden">Iniciar sesión</a>
+      </span>
     </nav>
 
     <div class="container">
@@ -25,13 +30,13 @@
             <input
               type="text"
               id="catalogSearch"
-              placeholder="Buscar por nombre..."
+              placeholder="Buscar por nombre o código..."
               oninput="filterCatalog()"
             />
           </div>
           <div class="toolbar-right">
             <select id="locationFilter" onchange="filterCatalog()">
-              <option value="">Todas las ubicaciones</option>
+              <option value="">Todas las bodegas</option>
               <option value="Casa">Casa</option>
               <option value="Santa Ana">Santa Ana</option>
             </select>
@@ -66,14 +71,36 @@
         </section>
       </main>
 
-      <footer>
-        <a href="admin.html" class="admin-link">Administración</a>
-      </footer>
+      <footer></footer>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productDetail" class="detail-overlay hidden" onclick="if(event.target===this)closeDetail()">
+      <div class="detail-box">
+        <button class="detail-close" onclick="closeDetail()">&times;</button>
+        <div id="detailContent"></div>
+      </div>
     </div>
 
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
+      // Show user info in nav for all users
+      const user = App.getUser();
+      if (user) {
+        const suffix = user.role === "admin" ? " (Admin)" : "";
+        document.getElementById("navUser").textContent = user.name + suffix;
+        document.getElementById("navLogout").classList.remove("hidden");
+      } else {
+        document.getElementById("navUser").textContent = "Invitado";
+        document.getElementById("navLogin").classList.remove("hidden");
+      }
+
+      function doLogout() {
+        App.logout();
+        window.location.href = "index.html";
+      }
+
       let allProducts = [];
       let currentView = "grid";
 
@@ -91,6 +118,7 @@
         if (query) {
           filtered = filtered.filter(p =>
             p.name.toLowerCase().includes(query) ||
+            (p.productCode && p.productCode.toLowerCase().includes(query)) ||
             (p.notes && p.notes.toLowerCase().includes(query))
           );
         }
@@ -125,18 +153,20 @@
             ? `<div class="product-img"><img src="${p.image}" alt="${p.name}" loading="lazy" /></div>`
             : placeholderSvg;
 
+          const currSymbol = p.currency === "USD" ? "$" : "₡";
           const priceHtml = p.price
-            ? `<span class="product-price">$${Number(p.price).toLocaleString("es-CR")}</span>`
+            ? `<span class="product-price">${currSymbol}${Number(p.price).toLocaleString("es-CR")}</span>`
             : "";
 
           const locationBadge = p.location
-            ? `<span class="location-badge location-${p.location === "Casa" ? "casa" : "santaana"}">${p.location}</span>`
+            ? `<span class="product-bodega">Bodega: ${p.location}</span>`
             : "";
 
           return `
-            <div class="product-card">
+            <div class="product-card" onclick="openDetail('${p.id}')" style="cursor:pointer">
               ${imgHtml}
               <div class="product-info">
+                ${p.productCode ? `<span class="product-code">${p.productCode}</span>` : ""}
                 <div class="product-header">
                   <h3 class="product-name">${p.name}</h3>
                   ${priceHtml}
@@ -150,6 +180,40 @@
           `;
         }).join("");
       }
+
+      function openDetail(id) {
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+
+        const currSymbol = p.currency === "USD" ? "$" : "₡";
+        const imgHtml = p.image
+          ? `<img src="${p.image}" alt="${p.name}" class="detail-image" />`
+          : `<div class="detail-image-placeholder"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+        document.getElementById("detailContent").innerHTML = `
+          ${imgHtml}
+          <div class="detail-info">
+            ${p.productCode ? `<span class="product-code">${p.productCode}</span>` : ""}
+            <h2 class="detail-name">${p.name}</h2>
+            ${p.price ? `<p class="detail-price">${currSymbol}${Number(p.price).toLocaleString("es-CR")}</p>` : ""}
+            ${p.location ? `<p class="detail-meta"><span class="product-bodega">Bodega: ${p.location}</span></p>` : ""}
+            ${p.notes ? `<p class="detail-notes">${p.notes}</p>` : ""}
+          </div>
+        `;
+
+        document.getElementById("productDetail").classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeDetail() {
+        document.getElementById("productDetail").classList.add("hidden");
+        document.body.style.overflow = "";
+      }
+
+      // Close on Escape
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDetail();
+      });
 
       function setView(view) {
         currentView = view;

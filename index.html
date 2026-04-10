@@ -3,115 +3,83 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rastreo de Paquetes</title>
+    <title>Iniciar sesión</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <nav class="top-nav">
-      <a href="index.html" class="active">Rastreo</a>
-      <a href="catalogo.html">Catálogo</a>
-    </nav>
+    <div class="login-page">
+      <div class="login-box">
+        <h1 class="login-title">📦 Rastreo de Paquetes</h1>
+        <p class="login-subtitle">Iniciá sesión para ver tus paquetes</p>
 
-    <div class="container">
-      <header>
-        <h1>Rastreo de Paquetes</h1>
-        <p class="subtitle">Consultá el estado de tus paquetes</p>
-      </header>
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <input type="text" id="username" placeholder="Tu usuario" />
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" />
+        </div>
 
-      <main>
-        <section class="search-section">
-          <div class="search-box">
-            <label for="searchInput">Ingresá tu cédula o número de rastreo</label>
-            <div class="search-row">
-              <input
-                type="text"
-                id="searchInput"
-                placeholder="Ej: 123456789 o TRK-0001"
-                autocomplete="off"
-              />
-              <button id="searchBtn" onclick="searchPackages()">Buscar</button>
-            </div>
-          </div>
-        </section>
+        <button id="loginBtn" onclick="doLogin()" class="btn-primary login-btn">Ingresar</button>
+        <p id="loginError" class="error-msg hidden"></p>
 
-        <section id="results" class="results-section hidden">
-          <h2 id="resultsTitle"></h2>
-          <div id="packageList"></div>
-        </section>
-
-        <section id="noResults" class="no-results hidden">
-          <p>No se encontraron paquetes. Verificá tu cédula o número de rastreo.</p>
-        </section>
-      </main>
-
-      <footer>
-        <a href="admin.html" class="admin-link">Administración</a>
-      </footer>
+        <div class="login-links">
+          <a href="#" class="login-link" onclick="forgotPassword(event)">¿Olvidaste tu contraseña?</a>
+          <a href="rastreo.html" class="login-link guest-link">Continuar como invitado</a>
+        </div>
+      </div>
     </div>
 
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
-      async function searchPackages() {
-        const query = document.getElementById("searchInput").value.trim();
-        if (!query) return;
+      // If already logged in, redirect
+      if (App.isLoggedIn()) {
+        const user = App.getUser();
+        if (user.role === "admin") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "rastreo.html";
+        }
+      }
 
-        const results = document.getElementById("results");
-        const noResults = document.getElementById("noResults");
-        const packageList = document.getElementById("packageList");
-        const resultsTitle = document.getElementById("resultsTitle");
+      async function doLogin() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const errorEl = document.getElementById("loginError");
+        errorEl.classList.add("hidden");
 
-        results.classList.add("hidden");
-        noResults.classList.add("hidden");
-        packageList.innerHTML = '<p class="loading">Buscando...</p>';
-
-        const packages = await App.searchPackages(query);
-
-        if (packages.length === 0) {
-          noResults.classList.remove("hidden");
+        if (!username || !password) {
+          errorEl.textContent = "Por favor ingresá usuario y contraseña.";
+          errorEl.classList.remove("hidden");
           return;
         }
 
-        resultsTitle.textContent = `Paquetes encontrados: ${packages.length}`;
-        packageList.innerHTML = packages.map(pkg => renderPackageCard(pkg)).join("");
-        results.classList.remove("hidden");
+        const result = await App.login(username, password);
+        if (result.success) {
+          if (result.role === "admin") {
+            window.location.href = "admin.html";
+          } else {
+            window.location.href = "rastreo.html";
+          }
+        } else {
+          errorEl.textContent = result.error;
+          errorEl.classList.remove("hidden");
+        }
       }
 
-      function renderPackageCard(pkg) {
-        const stages = App.STAGES;
-        const currentIndex = stages.indexOf(pkg.status);
-
-        const stepsHtml = stages
-          .map((stage, i) => {
-            let cls = "step";
-            if (i < currentIndex) cls += " completed";
-            else if (i === currentIndex) cls += " active";
-            return `<div class="${cls}">
-              <div class="step-dot"></div>
-              <span class="step-label">${stage}</span>
-            </div>`;
-          })
-          .join("");
-
-        return `
-          <div class="package-card">
-            <div class="card-header">
-              <span class="tracking-number">${pkg.trackingNumber}</span>
-              <span class="status-badge status-${currentIndex}">${pkg.status}</span>
-            </div>
-            <p class="card-description">${pkg.description}</p>
-            <div class="progress-bar">
-              ${stepsHtml}
-            </div>
-            ${pkg.statusUpdatedAt ? `<p class="card-date">Última actualización: ${new Date(pkg.statusUpdatedAt).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })}</p>` : ""}
-            ${pkg.notes ? `<p class="card-notes">📝 ${pkg.notes}</p>` : ""}
-          </div>
-        `;
+      function forgotPassword(e) {
+        e.preventDefault();
+        alert("Por favor contactá al administrador para restablecer tu contraseña.");
       }
 
-      // Allow Enter key to search
-      document.getElementById("searchInput").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") searchPackages();
+      // Enter key on password
+      document.getElementById("password").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
+      document.getElementById("username").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
       });
     </script>
   </body>

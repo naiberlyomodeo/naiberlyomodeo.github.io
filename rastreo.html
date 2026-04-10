@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rastreo de Paquetes</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="top-nav">
+      <a href="rastreo.html" class="active">Número de rastreo</a>
+      <a href="catalogo.html">Catálogo</a>
+      <span id="navRight" class="nav-right">
+        <span id="navUser" class="nav-user"></span>
+        <a href="#" id="navLogout" class="nav-logout hidden" onclick="doLogout()">Cerrar sesión</a>
+        <a href="index.html" id="navLogin" class="nav-logout hidden">Iniciar sesión</a>
+      </span>
+    </nav>
+
+    <div class="container">
+      <header>
+        <h1>Rastreo de Paquetes</h1>
+        <p class="subtitle" id="pageSubtitle">Consultá el estado de tus paquetes</p>
+      </header>
+
+      <main>
+        <!-- Search section (guests only) -->
+        <section id="searchSection" class="search-section">
+          <div class="search-box">
+            <label for="searchInput">Ingresá tu número de rastreo</label>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Ej: TRK-123456"
+              autocomplete="off"
+              oninput="debouncedSearch()"
+            />
+          </div>
+        </section>
+
+        <section id="results" class="results-section hidden">
+          <h2 id="resultsTitle"></h2>
+          <div id="packageList"></div>
+        </section>
+
+        <section id="noResults" class="no-results hidden">
+          <p>No se encontraron paquetes. Verificá tu número de rastreo.</p>
+        </section>
+
+        <section id="noPacketsClient" class="no-results hidden">
+          <p>No tenés paquetes registrados en este momento.</p>
+        </section>
+      </main>
+
+      <footer></footer>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script>
+      const user = App.getUser();
+      const isClient = user && user.role === "client";
+
+      // Show user info in nav for all users
+      if (user) {
+        const suffix = user.role === "admin" ? " (Admin)" : "";
+        document.getElementById("navUser").textContent = user.name + suffix;
+        document.getElementById("navLogout").classList.remove("hidden");
+      } else {
+        document.getElementById("navUser").textContent = "Invitado";
+        document.getElementById("navLogin").classList.remove("hidden");
+      }
+
+      // Client mode: auto-load packages, hide search
+      if (isClient) {
+        document.getElementById("searchSection").classList.add("hidden");
+        const firstName = user.name.replace(/\s*\(.*\)/, "");
+        document.getElementById("pageSubtitle").textContent = `Hola ${firstName}, estos son tus paquetes`;
+        loadClientPackages();
+      }
+
+      async function loadClientPackages() {
+        const packages = await App.searchPackages(user.cedula);
+        const results = document.getElementById("results");
+        const packageList = document.getElementById("packageList");
+        const resultsTitle = document.getElementById("resultsTitle");
+        const noPackets = document.getElementById("noPacketsClient");
+
+        if (packages.length === 0) {
+          noPackets.classList.remove("hidden");
+          return;
+        }
+
+        resultsTitle.textContent = `Tus paquetes: ${packages.length}`;
+        packageList.innerHTML = packages.map(pkg => renderPackageCard(pkg)).join("");
+        results.classList.remove("hidden");
+      }
+
+      // Guest mode: debounced search
+      let searchTimer = null;
+      function debouncedSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(searchPackages, 300);
+      }
+
+      async function searchPackages() {
+        const query = document.getElementById("searchInput").value.trim();
+        const results = document.getElementById("results");
+        const noResults = document.getElementById("noResults");
+        const packageList = document.getElementById("packageList");
+        const resultsTitle = document.getElementById("resultsTitle");
+
+        results.classList.add("hidden");
+        noResults.classList.add("hidden");
+
+        if (!query) return;
+
+        packageList.innerHTML = '<p class="loading">Buscando...</p>';
+        results.classList.remove("hidden");
+
+        const packages = await App.searchByTracking(query);
+
+        if (packages.length === 0) {
+          results.classList.add("hidden");
+          noResults.classList.remove("hidden");
+          return;
+        }
+
+        resultsTitle.textContent = `Paquetes encontrados: ${packages.length}`;
+        packageList.innerHTML = packages.map(pkg => renderPackageCard(pkg)).join("");
+      }
+
+      function renderPackageCard(pkg) {
+        const stages = App.STAGES;
+        const currentIndex = stages.indexOf(pkg.status);
+
+        const stepsHtml = stages
+          .map((stage, i) => {
+            let cls = "step";
+            if (i < currentIndex) cls += " completed";
+            else if (i === currentIndex) cls += " active";
+            return `<div class="${cls}">
+              <div class="step-dot"></div>
+              <span class="step-label">${stage}</span>
+            </div>`;
+          })
+          .join("");
+
+        return `
+          <div class="package-card">
+            <div class="card-header">
+              <span class="tracking-number">${pkg.trackingNumber}</span>
+              <span class="status-badge status-${currentIndex}">${pkg.status}</span>
+            </div>
+            <p class="card-description">${pkg.description}</p>
+            <div class="progress-bar">
+              ${stepsHtml}
+            </div>
+            ${pkg.statusUpdatedAt ? `<p class="card-date">Última actualización: ${new Date(pkg.statusUpdatedAt).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })}</p>` : ""}
+            ${pkg.notes ? `<p class="card-notes">📝 ${pkg.notes}</p>` : ""}
+          </div>
+        `;
+      }
+
+      function doLogout() {
+        App.logout();
+        window.location.href = "index.html";
+      }
+    </script>
+  </body>
+</html>

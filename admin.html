@@ -7,32 +7,17 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <nav class="top-nav">
-      <a href="index.html">Rastreo</a>
-      <a href="catalogo.html">Catálogo</a>
+    <nav class="top-nav hidden" id="adminNav">
+      <span class="nav-right" style="position:static">
+        <span id="navUser" class="nav-user"></span>
+        <a href="#" class="nav-logout" onclick="logout()">Cerrar sesión</a>
+      </span>
     </nav>
 
     <div class="container">
       <header>
         <h1>Administración</h1>
       </header>
-
-      <!-- Login Section -->
-      <section id="loginSection">
-        <div class="login-box">
-          <h2>Iniciar sesión</h2>
-          <div class="form-group">
-            <label for="email">Correo electrónico</label>
-            <input type="email" id="email" placeholder="admin@ejemplo.com" />
-          </div>
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input type="password" id="password" placeholder="••••••••" />
-          </div>
-          <button id="loginBtn" onclick="login()">Ingresar</button>
-          <p id="loginError" class="error-msg hidden"></p>
-        </div>
-      </section>
 
       <!-- Admin Dashboard -->
       <section id="adminSection" class="hidden">
@@ -41,8 +26,7 @@
         <div class="admin-tabs">
           <button class="tab-btn active" onclick="switchTab('packages')">📦 Paquetes</button>
           <button class="tab-btn" onclick="switchTab('catalog')">🛍️ Catálogo</button>
-          <div style="flex:1"></div>
-          <button onclick="logout()" class="btn-secondary btn-sm">Cerrar sesión</button>
+          <button class="tab-btn" onclick="switchTab('clients')">👥 Clientes</button>
         </div>
 
         <!-- ============================================ -->
@@ -75,10 +59,6 @@
                 <label for="clientId">Cédula del cliente <span class="required">*</span></label>
                 <input type="text" id="clientId" placeholder="123456789" />
                 <span class="field-error hidden" id="clientIdError">Este campo es obligatorio</span>
-              </div>
-              <div class="form-group">
-                <label for="trackingNumber">Número de rastreo</label>
-                <input type="text" id="trackingNumber" placeholder="Se genera automáticamente" readonly />
               </div>
               <div class="form-group">
                 <label for="pkgDescription">Descripción del paquete <span class="required">*</span></label>
@@ -116,7 +96,7 @@
               <thead>
                 <tr>
                   <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /></th>
-                  <th>Rastreo</th>
+                  <th style="white-space:nowrap">Tracking Number</th>
                   <th>Cliente</th>
                   <th>Cédula</th>
                   <th>Descripción</th>
@@ -157,12 +137,18 @@
                 <span class="field-error hidden" id="prodNameError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
-                <label for="prodPrice">Precio ($) <span class="required">*</span></label>
-                <input type="number" id="prodPrice" placeholder="0.00" step="0.01" min="0" />
+                <label for="prodPrice">Precio <span class="required">*</span></label>
+                <div class="price-row">
+                  <select id="prodCurrency" class="currency-select">
+                    <option value="CRC">CRC</option>
+                    <option value="USD">USD</option>
+                  </select>
+                  <input type="number" id="prodPrice" placeholder="0.00" step="0.01" min="0" />
+                </div>
                 <span class="field-error hidden" id="prodPriceError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
-                <label for="prodLocation">Ubicación <span class="required">*</span></label>
+                <label for="prodLocation">Bodega <span class="required">*</span></label>
                 <select id="prodLocation">
                   <option value="">Seleccionar...</option>
                   <option value="Casa">Casa</option>
@@ -195,9 +181,10 @@
               <thead>
                 <tr>
                   <th>Imagen</th>
+                  <th>ID</th>
                   <th>Nombre</th>
                   <th>Precio</th>
-                  <th>Ubicación</th>
+                  <th>Bodega</th>
                   <th>Notas</th>
                   <th>Acciones</th>
                 </tr>
@@ -207,7 +194,92 @@
           </div>
         </div>
 
+        <!-- ============================================ -->
+        <!-- CLIENTS TAB                                  -->
+        <!-- ============================================ -->
+        <div id="tab-clients" class="tab-content hidden">
+          <div class="admin-toolbar">
+            <button onclick="showAddClientForm()" class="btn-primary">+ Nuevo cliente</button>
+            <div class="search-row">
+              <input
+                type="text"
+                id="clientAdminSearch"
+                placeholder="Buscar por nombre, cédula o teléfono..."
+                oninput="filterClients()"
+              />
+            </div>
+          </div>
+
+          <!-- Add/Edit Client Form -->
+          <div id="clientForm" class="form-section hidden">
+            <h3 id="clientFormTitle">Nuevo cliente</h3>
+            <input type="hidden" id="clientEditId" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cliName">Nombre completo <span class="required">*</span></label>
+                <input type="text" id="cliName" placeholder="María López" />
+                <span class="field-error hidden" id="cliNameError">Este campo es obligatorio</span>
+              </div>
+              <div class="form-group">
+                <label for="cliCedula">Cédula <span class="required">*</span></label>
+                <input type="text" id="cliCedula" placeholder="123456789" />
+                <span class="field-error hidden" id="cliCedulaError">Este campo es obligatorio</span>
+              </div>
+              <div class="form-group">
+                <label for="cliPhone">Teléfono <span class="required">*</span></label>
+                <input type="text" id="cliPhone" placeholder="8888-8888" />
+                <span class="field-error hidden" id="cliPhoneError">Este campo es obligatorio</span>
+              </div>
+              <div class="form-group">
+                <label for="cliEmail">Correo electrónico (opcional)</label>
+                <input type="email" id="cliEmail" placeholder="maria@ejemplo.com" />
+              </div>
+              <div class="form-group">
+                <label for="cliAddress">Dirección (opcional)</label>
+                <input type="text" id="cliAddress" placeholder="San José, Costa Rica" />
+              </div>
+              <div class="form-group">
+                <label for="cliNotes">Notas (opcional)</label>
+                <input type="text" id="cliNotes" placeholder="Notas sobre el cliente..." />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button onclick="saveClient()" class="btn-primary">Guardar</button>
+              <button onclick="hideClientForm()" class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Client Table -->
+          <div class="table-wrapper">
+            <table id="clientTable">
+              <thead>
+                <tr>
+                  <th>Cédula</th>
+                  <th>Nombre</th>
+                  <th>Teléfono</th>
+                  <th>Correo</th>
+                  <th>Dirección</th>
+                  <th>Notas</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="clientTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
       </section>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <p id="confirmMsg">¿Estás segura?</p>
+        <div class="modal-actions">
+          <button id="confirmYes" class="btn-primary btn-danger">Eliminar</button>
+          <button id="confirmNo" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      </div>
     </div>
 
     <script src="firebase-config.js"></script>
@@ -221,37 +293,24 @@
       function switchTab(tab) {
         document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
         document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
-        document.getElementById(`tab-${tab === "packages" ? "packages" : "catalog"}`).classList.remove("hidden");
+        document.getElementById(`tab-${tab}`).classList.remove("hidden");
         event.target.classList.add("active");
 
         if (tab === "catalog") loadProducts();
+        if (tab === "clients") loadClients();
       }
 
       // ---- Auth ----
-      async function login() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const errorEl = document.getElementById("loginError");
-        errorEl.classList.add("hidden");
-
-        const result = await App.login(email, password);
-        if (result.success) {
-          showAdmin();
-        } else {
-          errorEl.textContent = result.error;
-          errorEl.classList.remove("hidden");
-        }
-      }
-
       function logout() {
         App.logout();
-        document.getElementById("adminSection").classList.add("hidden");
-        document.getElementById("loginSection").classList.remove("hidden");
+        window.location.href = "index.html";
       }
 
       async function showAdmin() {
-        document.getElementById("loginSection").classList.add("hidden");
         document.getElementById("adminSection").classList.remove("hidden");
+        document.getElementById("adminNav").classList.remove("hidden");
+        const user = App.getUser();
+        if (user) document.getElementById("navUser").textContent = user.name + " (Admin)";
         populateStatusDropdowns();
         await loadPackages();
       }
@@ -299,15 +358,15 @@
             pkg => `
           <tr>
             <td><input type="checkbox" class="pkg-check" value="${pkg.id}" onchange="updateBulkCount()" /></td>
-            <td><strong>${pkg.trackingNumber}</strong></td>
+            <td><span class="tracking-cell"><strong>${pkg.trackingNumber}</strong><button class="btn-copy" onclick="copyTracking('${pkg.trackingNumber}', this)" title="Copiar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></span></td>
             <td>${pkg.clientName}</td>
             <td>${pkg.clientId}</td>
             <td>${pkg.description}</td>
             <td><span class="status-badge status-${App.STAGES.indexOf(pkg.status)}">${pkg.status}</span></td>
             <td class="date-cell">${formatDate(pkg.statusUpdatedAt)}</td>
             <td class="actions">
-              <button onclick="editPackage('${pkg.id}')" class="btn-sm">Editar</button>
-              <button onclick="deletePackage('${pkg.id}')" class="btn-sm btn-danger">✕</button>
+              <button onclick="editPackage('${pkg.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button onclick="deletePackage('${pkg.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
             </td>
           </tr>
         `
@@ -320,7 +379,6 @@
         document.getElementById("pkgEditId").value = "";
         document.getElementById("clientName").value = "";
         document.getElementById("clientId").value = "";
-        document.getElementById("trackingNumber").value = "Se genera automáticamente";
         document.getElementById("pkgDescription").value = "";
         document.getElementById("pkgStatus").value = App.STAGES[0];
         document.getElementById("pkgNotes").value = "";
@@ -386,17 +444,17 @@
         document.getElementById("pkgEditId").value = pkg.id;
         document.getElementById("clientName").value = pkg.clientName;
         document.getElementById("clientId").value = pkg.clientId;
-        document.getElementById("trackingNumber").value = pkg.trackingNumber;
         document.getElementById("pkgDescription").value = pkg.description;
         document.getElementById("pkgStatus").value = pkg.status;
         document.getElementById("pkgNotes").value = pkg.notes || "";
         document.getElementById("packageForm").classList.remove("hidden");
       }
 
-      async function deletePackage(id) {
-        if (!confirm("¿Estás segura de que querés eliminar este paquete?")) return;
-        await App.deletePackage(id);
-        await loadPackages();
+      function deletePackage(id) {
+        showModal("¿Estás segura de que querés eliminar este paquete?", async () => {
+          await App.deletePackage(id);
+          await loadPackages();
+        });
       }
 
       function toggleSelectAll() {
@@ -442,7 +500,9 @@
         const q = document.getElementById("catalogAdminSearch").value.toLowerCase().trim();
         if (!q) return renderProductTable(allProducts);
         const filtered = allProducts.filter(
-          p => p.name.toLowerCase().includes(q) || (p.notes && p.notes.toLowerCase().includes(q))
+          p => p.name.toLowerCase().includes(q) ||
+            (p.productCode && p.productCode.toLowerCase().includes(q)) ||
+            (p.notes && p.notes.toLowerCase().includes(q))
         );
         renderProductTable(filtered);
       }
@@ -450,7 +510,7 @@
       function renderProductTable(products) {
         const tbody = document.getElementById("prodTableBody");
         if (products.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay productos</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay productos</td></tr>';
           return;
         }
         tbody.innerHTML = products
@@ -458,13 +518,14 @@
             p => `
           <tr>
             <td>${p.image ? `<img src="${p.image}" class="table-thumb" alt="${p.name}" />` : '<div class="table-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>'}</td>
-            <td><strong>${p.name}</strong></td>
-            <td>${p.price ? "$" + Number(p.price).toLocaleString("es-CR") : "—"}</td>
-            <td>${p.location ? `<span class="location-badge location-${p.location === "Casa" ? "casa" : "santaana"}">${p.location}</span>` : "—"}</td>
+            <td>${p.productCode ? `<span class="tracking-cell"><strong>${p.productCode}</strong><button class="btn-copy" onclick="event.stopPropagation();copyTracking('${p.productCode}', this)" title="Copiar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></span>` : "—"}</td>
+            <td>${p.name}</td>
+            <td>${p.price ? (p.currency === "USD" ? "$" : "₡") + Number(p.price).toLocaleString("es-CR") : "—"}</td>
+            <td style="white-space:nowrap">${p.location || "—"}</td>
             <td>${p.notes || "—"}</td>
             <td class="actions">
-              <button onclick="editProduct('${p.id}')" class="btn-sm">Editar</button>
-              <button onclick="deleteProduct('${p.id}')" class="btn-sm btn-danger">✕</button>
+              <button onclick="editProduct('${p.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button onclick="deleteProduct('${p.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
             </td>
           </tr>
         `
@@ -552,6 +613,7 @@
         const data = {
           name: document.getElementById("prodName").value.trim(),
           price: document.getElementById("prodPrice").value,
+          currency: document.getElementById("prodCurrency").value,
           location: document.getElementById("prodLocation").value,
           notes: document.getElementById("prodNotes").value.trim(),
         };
@@ -581,6 +643,7 @@
         document.getElementById("prodFormTitle").textContent = "Editar producto";
         document.getElementById("prodEditId").value = p.id;
         document.getElementById("prodName").value = p.name;
+        document.getElementById("prodCurrency").value = p.currency || "CRC";
         document.getElementById("prodPrice").value = p.price || "";
         document.getElementById("prodLocation").value = p.location || "";
         document.getElementById("prodNotes").value = p.notes || "";
@@ -595,18 +658,194 @@
         document.getElementById("productForm").classList.remove("hidden");
       }
 
-      async function deleteProduct(id) {
-        if (!confirm("¿Estás segura de que querés eliminar este producto?")) return;
-        await App.deleteProduct(id);
-        await loadProducts();
+      function deleteProduct(id) {
+        showModal("¿Estás segura de que querés eliminar este producto?", async () => {
+          await App.deleteProduct(id);
+          await loadProducts();
+        });
       }
 
-      // ---- Init ----
+      // ---- Clients ----
+      let allClients = [];
+
+      async function loadClients() {
+        allClients = await App.getAllClients();
+        renderClientTable(allClients);
+      }
+
+      function filterClients() {
+        const q = document.getElementById("clientAdminSearch").value.toLowerCase().trim();
+        if (!q) return renderClientTable(allClients);
+        const filtered = allClients.filter(
+          c =>
+            c.name.toLowerCase().includes(q) ||
+            c.cedula.toLowerCase().includes(q) ||
+            (c.phone && c.phone.toLowerCase().includes(q))
+        );
+        renderClientTable(filtered);
+      }
+
+      function renderClientTable(clients) {
+        const tbody = document.getElementById("clientTableBody");
+        if (clients.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay clientes</td></tr>';
+          return;
+        }
+        tbody.innerHTML = clients
+          .map(
+            c => `
+          <tr>
+            <td><span class="tracking-cell"><strong>${c.cedula}</strong><button class="btn-copy" onclick="copyTracking('${c.cedula}', this)" title="Copiar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></span></td>
+            <td style="white-space:nowrap">${c.name}</td>
+            <td style="white-space:nowrap">${c.phone || "—"}</td>
+            <td style="white-space:nowrap">${c.email || "—"}</td>
+            <td>${c.address || "—"}</td>
+            <td>${c.notes || "—"}</td>
+            <td class="actions">
+              <button onclick="editClient('${c.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button onclick="deleteClient('${c.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </td>
+          </tr>
+        `
+          )
+          .join("");
+      }
+
+      function showAddClientForm() {
+        document.getElementById("clientFormTitle").textContent = "Nuevo cliente";
+        document.getElementById("clientEditId").value = "";
+        document.getElementById("cliName").value = "";
+        document.getElementById("cliCedula").value = "";
+        document.getElementById("cliPhone").value = "";
+        document.getElementById("cliEmail").value = "";
+        document.getElementById("cliAddress").value = "";
+        document.getElementById("cliNotes").value = "";
+        clearClientErrors();
+        document.getElementById("clientForm").classList.remove("hidden");
+      }
+
+      function hideClientForm() {
+        document.getElementById("clientForm").classList.add("hidden");
+      }
+
+      function clearClientErrors() {
+        ["cliName", "cliCedula", "cliPhone"].forEach(id => {
+          document.getElementById(id).classList.remove("input-error");
+          document.getElementById(id + "Error").classList.add("hidden");
+        });
+      }
+
+      function validateClientForm(data) {
+        clearClientErrors();
+        let valid = true;
+        const fields = [
+          { key: "name", id: "cliName" },
+          { key: "cedula", id: "cliCedula" },
+          { key: "phone", id: "cliPhone" },
+        ];
+        fields.forEach(f => {
+          if (!data[f.key]) {
+            document.getElementById(f.id).classList.add("input-error");
+            document.getElementById(f.id + "Error").classList.remove("hidden");
+            valid = false;
+          }
+        });
+        return valid;
+      }
+
+      async function saveClient() {
+        const editId = document.getElementById("clientEditId").value;
+        const data = {
+          name: document.getElementById("cliName").value.trim(),
+          cedula: document.getElementById("cliCedula").value.trim(),
+          phone: document.getElementById("cliPhone").value.trim(),
+          email: document.getElementById("cliEmail").value.trim(),
+          address: document.getElementById("cliAddress").value.trim(),
+          notes: document.getElementById("cliNotes").value.trim(),
+        };
+
+        if (!validateClientForm(data)) return;
+
+        if (editId) {
+          await App.updateClient(editId, data);
+        } else {
+          await App.addClient(data);
+        }
+
+        clearClientErrors();
+        hideClientForm();
+        await loadClients();
+      }
+
+      function editClient(id) {
+        const c = allClients.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById("clientFormTitle").textContent = "Editar cliente";
+        document.getElementById("clientEditId").value = c.id;
+        document.getElementById("cliName").value = c.name;
+        document.getElementById("cliCedula").value = c.cedula;
+        document.getElementById("cliPhone").value = c.phone || "";
+        document.getElementById("cliEmail").value = c.email || "";
+        document.getElementById("cliAddress").value = c.address || "";
+        document.getElementById("cliNotes").value = c.notes || "";
+        clearClientErrors();
+        document.getElementById("clientForm").classList.remove("hidden");
+      }
+
+      function deleteClient(id) {
+        showModal("¿Estás segura de que querés eliminar este cliente?", async () => {
+          await App.deleteClient(id);
+          await loadClients();
+        });
+      }
+
+      // ---- Copy Tracking ----
+      function copyTracking(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.classList.add("copied");
+          btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+          }, 1500);
+        });
+      }
+
+      // ---- Confirm Modal ----
+      let modalCallback = null;
+
+      function showModal(msg, onConfirm) {
+        document.getElementById("confirmMsg").textContent = msg;
+        document.getElementById("confirmModal").classList.remove("hidden");
+        modalCallback = onConfirm;
+        document.getElementById("confirmYes").onclick = async () => {
+          closeModal();
+          if (modalCallback) await modalCallback();
+          modalCallback = null;
+        };
+      }
+
+      function closeModal() {
+        document.getElementById("confirmModal").classList.add("hidden");
+        modalCallback = null;
+      }
+
+      // ---- Init: only logged-in admins can access this page ----
       if (App.isLoggedIn()) {
-        showAdmin();
+        const user = App.getUser();
+        if (user && user.role === "admin") {
+          showAdmin();
+        } else {
+          window.location.href = "index.html";
+        }
+      } else {
+        window.location.href = "index.html";
       }
 
       document.getElementById("password").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") login();
+      });
+      document.getElementById("username").addEventListener("keydown", (e) => {
         if (e.key === "Enter") login();
       });
     </script>
