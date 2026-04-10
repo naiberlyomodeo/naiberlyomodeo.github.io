@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Rastreo de Paquetes</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>📦 Administración</h1>
+        <a href="index.html" class="back-link">← Volver al rastreo</a>
+      </header>
+
+      <!-- Login Section -->
+      <section id="loginSection">
+        <div class="login-box">
+          <h2>Iniciar sesión</h2>
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" placeholder="admin@ejemplo.com" />
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" placeholder="••••••••" />
+          </div>
+          <button id="loginBtn" onclick="login()">Ingresar</button>
+          <p id="loginError" class="error-msg hidden"></p>
+        </div>
+      </section>
+
+      <!-- Admin Dashboard -->
+      <section id="adminSection" class="hidden">
+        <div class="admin-toolbar">
+          <button onclick="showAddForm()" class="btn-primary">+ Nuevo paquete</button>
+          <div class="search-row">
+            <input
+              type="text"
+              id="adminSearch"
+              placeholder="Buscar por cédula o rastreo..."
+              oninput="filterPackages()"
+            />
+          </div>
+          <button onclick="logout()" class="btn-secondary">Cerrar sesión</button>
+        </div>
+
+        <!-- Add/Edit Package Form -->
+        <div id="packageForm" class="form-section hidden">
+          <h3 id="formTitle">Nuevo paquete</h3>
+          <input type="hidden" id="editId" />
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="clientName">Nombre del cliente</label>
+              <input type="text" id="clientName" placeholder="María López" />
+            </div>
+            <div class="form-group">
+              <label for="clientId">Cédula del cliente</label>
+              <input type="text" id="clientId" placeholder="123456789" />
+            </div>
+            <div class="form-group">
+              <label for="trackingNumber">Número de rastreo</label>
+              <input type="text" id="trackingNumber" placeholder="Se genera automáticamente" readonly />
+            </div>
+            <div class="form-group">
+              <label for="description">Descripción del paquete</label>
+              <input type="text" id="description" placeholder="Ej: Zapatos Nike, talla 10" />
+            </div>
+            <div class="form-group">
+              <label for="status">Estado</label>
+              <select id="status"></select>
+            </div>
+            <div class="form-group">
+              <label for="notes">Notas (opcional)</label>
+              <input type="text" id="notes" placeholder="Notas adicionales..." />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button onclick="savePackage()" class="btn-primary">Guardar</button>
+            <button onclick="hideForm()" class="btn-secondary">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- Bulk Update -->
+        <div id="bulkSection" class="hidden">
+          <div class="bulk-bar">
+            <span id="bulkCount">0 seleccionados</span>
+            <select id="bulkStatus"></select>
+            <button onclick="bulkUpdate()" class="btn-primary">Actualizar seleccionados</button>
+            <button onclick="cancelBulk()" class="btn-secondary">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- Package Table -->
+        <div class="table-wrapper">
+          <table id="packageTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /></th>
+                <th>Rastreo</th>
+                <th>Cliente</th>
+                <th>Cédula</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script>
+      let allPackages = [];
+
+      // Populate status dropdowns
+      function populateStatusDropdowns() {
+        const selects = [document.getElementById("status"), document.getElementById("bulkStatus")];
+        selects.forEach(sel => {
+          sel.innerHTML = App.STAGES.map(s => `<option value="${s}">${s}</option>`).join("");
+        });
+      }
+
+      async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const errorEl = document.getElementById("loginError");
+        errorEl.classList.add("hidden");
+
+        const result = await App.login(email, password);
+        if (result.success) {
+          showAdmin();
+        } else {
+          errorEl.textContent = result.error;
+          errorEl.classList.remove("hidden");
+        }
+      }
+
+      function logout() {
+        App.logout();
+        document.getElementById("adminSection").classList.add("hidden");
+        document.getElementById("loginSection").classList.remove("hidden");
+      }
+
+      async function showAdmin() {
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("adminSection").classList.remove("hidden");
+        populateStatusDropdowns();
+        await loadPackages();
+      }
+
+      async function loadPackages() {
+        allPackages = await App.getAllPackages();
+        renderTable(allPackages);
+      }
+
+      function filterPackages() {
+        const q = document.getElementById("adminSearch").value.toLowerCase().trim();
+        if (!q) return renderTable(allPackages);
+        const filtered = allPackages.filter(
+          p =>
+            p.clientId.toLowerCase().includes(q) ||
+            p.trackingNumber.toLowerCase().includes(q) ||
+            p.clientName.toLowerCase().includes(q)
+        );
+        renderTable(filtered);
+      }
+
+      function renderTable(packages) {
+        const tbody = document.getElementById("tableBody");
+        if (packages.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay paquetes</td></tr>';
+          return;
+        }
+        tbody.innerHTML = packages
+          .map(
+            pkg => `
+          <tr>
+            <td><input type="checkbox" class="pkg-check" value="${pkg.id}" onchange="updateBulkCount()" /></td>
+            <td><strong>${pkg.trackingNumber}</strong></td>
+            <td>${pkg.clientName}</td>
+            <td>${pkg.clientId}</td>
+            <td>${pkg.description}</td>
+            <td><span class="status-badge status-${App.STAGES.indexOf(pkg.status)}">${pkg.status}</span></td>
+            <td class="actions">
+              <button onclick="editPackage('${pkg.id}')" class="btn-sm">Editar</button>
+              <button onclick="advanceStatus('${pkg.id}')" class="btn-sm btn-advance" title="Avanzar estado">▶</button>
+              <button onclick="deletePackage('${pkg.id}')" class="btn-sm btn-danger">✕</button>
+            </td>
+          </tr>
+        `
+          )
+          .join("");
+      }
+
+      function showAddForm() {
+        document.getElementById("formTitle").textContent = "Nuevo paquete";
+        document.getElementById("editId").value = "";
+        document.getElementById("clientName").value = "";
+        document.getElementById("clientId").value = "";
+        document.getElementById("trackingNumber").value = "Se genera automáticamente";
+        document.getElementById("description").value = "";
+        document.getElementById("status").value = App.STAGES[0];
+        document.getElementById("notes").value = "";
+        document.getElementById("packageForm").classList.remove("hidden");
+      }
+
+      function hideForm() {
+        document.getElementById("packageForm").classList.add("hidden");
+      }
+
+      async function savePackage() {
+        const editId = document.getElementById("editId").value;
+        const data = {
+          clientName: document.getElementById("clientName").value.trim(),
+          clientId: document.getElementById("clientId").value.trim(),
+          description: document.getElementById("description").value.trim(),
+          status: document.getElementById("status").value,
+          notes: document.getElementById("notes").value.trim(),
+        };
+
+        if (!data.clientName || !data.clientId || !data.description) {
+          alert("Por favor completá nombre, cédula y descripción.");
+          return;
+        }
+
+        if (editId) {
+          await App.updatePackage(editId, data);
+        } else {
+          await App.addPackage(data);
+        }
+
+        hideForm();
+        await loadPackages();
+      }
+
+      function editPackage(id) {
+        const pkg = allPackages.find(p => p.id === id);
+        if (!pkg) return;
+        document.getElementById("formTitle").textContent = "Editar paquete";
+        document.getElementById("editId").value = pkg.id;
+        document.getElementById("clientName").value = pkg.clientName;
+        document.getElementById("clientId").value = pkg.clientId;
+        document.getElementById("trackingNumber").value = pkg.trackingNumber;
+        document.getElementById("description").value = pkg.description;
+        document.getElementById("status").value = pkg.status;
+        document.getElementById("notes").value = pkg.notes || "";
+        document.getElementById("packageForm").classList.remove("hidden");
+      }
+
+      async function advanceStatus(id) {
+        const pkg = allPackages.find(p => p.id === id);
+        if (!pkg) return;
+        const idx = App.STAGES.indexOf(pkg.status);
+        if (idx < App.STAGES.length - 1) {
+          await App.updatePackage(id, { status: App.STAGES[idx + 1] });
+          await loadPackages();
+        }
+      }
+
+      async function deletePackage(id) {
+        if (!confirm("¿Estás segura de que querés eliminar este paquete?")) return;
+        await App.deletePackage(id);
+        await loadPackages();
+      }
+
+      // Bulk operations
+      function toggleSelectAll() {
+        const checked = document.getElementById("selectAll").checked;
+        document.querySelectorAll(".pkg-check").forEach(cb => (cb.checked = checked));
+        updateBulkCount();
+      }
+
+      function updateBulkCount() {
+        const selected = document.querySelectorAll(".pkg-check:checked");
+        const section = document.getElementById("bulkSection");
+        document.getElementById("bulkCount").textContent = `${selected.length} seleccionados`;
+        if (selected.length > 0) {
+          section.classList.remove("hidden");
+        } else {
+          section.classList.add("hidden");
+        }
+      }
+
+      async function bulkUpdate() {
+        const selected = [...document.querySelectorAll(".pkg-check:checked")].map(cb => cb.value);
+        const newStatus = document.getElementById("bulkStatus").value;
+        for (const id of selected) {
+          await App.updatePackage(id, { status: newStatus });
+        }
+        cancelBulk();
+        await loadPackages();
+      }
+
+      function cancelBulk() {
+        document.getElementById("selectAll").checked = false;
+        document.querySelectorAll(".pkg-check").forEach(cb => (cb.checked = false));
+        document.getElementById("bulkSection").classList.add("hidden");
+      }
+
+      // Check if already logged in
+      if (App.isLoggedIn()) {
+        showAdmin();
+      }
+
+      // Allow Enter on login
+      document.getElementById("password").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") login();
+      });
+    </script>
+  </body>
+</html>
