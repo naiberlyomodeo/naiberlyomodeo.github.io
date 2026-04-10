@@ -110,6 +110,24 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+/* Error states */
+.input-error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+.field-error {
+  display: block;
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.required {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .form-group {
   margin-bottom: 1rem;
 }
@@ -678,6 +696,31 @@ td.empty {
   height: 48px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.table-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+/* Date cell in package table */
+.date-cell {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Date on client card */
+.card-date {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 /* Image preview in form */

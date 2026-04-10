@@ -103,6 +103,7 @@
             <div class="progress-bar">
               ${stepsHtml}
             </div>
+            ${pkg.statusUpdatedAt ? `<p class="card-date">Última actualización: ${new Date(pkg.statusUpdatedAt).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })}</p>` : ""}
             ${pkg.notes ? `<p class="card-notes">📝 ${pkg.notes}</p>` : ""}
           </div>
         `;

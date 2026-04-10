@@ -67,23 +67,26 @@
             <input type="hidden" id="pkgEditId" />
             <div class="form-grid">
               <div class="form-group">
-                <label for="clientName">Nombre del cliente</label>
+                <label for="clientName">Nombre del cliente <span class="required">*</span></label>
                 <input type="text" id="clientName" placeholder="María López" />
+                <span class="field-error hidden" id="clientNameError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
-                <label for="clientId">Cédula del cliente</label>
+                <label for="clientId">Cédula del cliente <span class="required">*</span></label>
                 <input type="text" id="clientId" placeholder="123456789" />
+                <span class="field-error hidden" id="clientIdError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
                 <label for="trackingNumber">Número de rastreo</label>
                 <input type="text" id="trackingNumber" placeholder="Se genera automáticamente" readonly />
               </div>
               <div class="form-group">
-                <label for="pkgDescription">Descripción del paquete</label>
+                <label for="pkgDescription">Descripción del paquete <span class="required">*</span></label>
                 <input type="text" id="pkgDescription" placeholder="Ej: Zapatos Nike, talla 10" />
+                <span class="field-error hidden" id="pkgDescriptionError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
-                <label for="pkgStatus">Estado</label>
+                <label for="pkgStatus">Estado <span class="required">*</span></label>
                 <select id="pkgStatus"></select>
               </div>
               <div class="form-group">
@@ -118,6 +121,7 @@
                   <th>Cédula</th>
                   <th>Descripción</th>
                   <th>Estado</th>
+                  <th>Actualizado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -148,27 +152,30 @@
             <input type="hidden" id="prodEditId" />
             <div class="form-grid">
               <div class="form-group">
-                <label for="prodName">Nombre del producto</label>
+                <label for="prodName">Nombre del producto <span class="required">*</span></label>
                 <input type="text" id="prodName" placeholder="Ej: Zapatos Nike Air Max" />
+                <span class="field-error hidden" id="prodNameError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
-                <label for="prodPrice">Precio ($)</label>
+                <label for="prodPrice">Precio ($) <span class="required">*</span></label>
                 <input type="number" id="prodPrice" placeholder="0.00" step="0.01" min="0" />
+                <span class="field-error hidden" id="prodPriceError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
-                <label for="prodLocation">Ubicación</label>
+                <label for="prodLocation">Ubicación <span class="required">*</span></label>
                 <select id="prodLocation">
-                  <option value="">Sin ubicación</option>
+                  <option value="">Seleccionar...</option>
                   <option value="Casa">Casa</option>
                   <option value="Santa Ana">Santa Ana</option>
                 </select>
+                <span class="field-error hidden" id="prodLocationError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
                 <label for="prodNotes">Notas (opcional)</label>
                 <input type="text" id="prodNotes" placeholder="Color, talla, detalles..." />
               </div>
               <div class="form-group form-group-full">
-                <label for="prodImage">Imagen</label>
+                <label for="prodImage">Imagen (opcional)</label>
                 <input type="file" id="prodImage" accept="image/*" onchange="previewImage(event)" />
                 <div id="imagePreview" class="image-preview hidden">
                   <img id="previewImg" src="" alt="Preview" />
@@ -274,10 +281,17 @@
         renderPackageTable(filtered);
       }
 
+      function formatDate(isoString) {
+        if (!isoString) return "—";
+        const d = new Date(isoString);
+        return d.toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
+          + " " + d.toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit" });
+      }
+
       function renderPackageTable(packages) {
         const tbody = document.getElementById("tableBody");
         if (packages.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay paquetes</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay paquetes</td></tr>';
           return;
         }
         tbody.innerHTML = packages
@@ -290,9 +304,9 @@
             <td>${pkg.clientId}</td>
             <td>${pkg.description}</td>
             <td><span class="status-badge status-${App.STAGES.indexOf(pkg.status)}">${pkg.status}</span></td>
+            <td class="date-cell">${formatDate(pkg.statusUpdatedAt)}</td>
             <td class="actions">
               <button onclick="editPackage('${pkg.id}')" class="btn-sm">Editar</button>
-              <button onclick="advanceStatus('${pkg.id}')" class="btn-sm btn-advance" title="Avanzar estado">▶</button>
               <button onclick="deletePackage('${pkg.id}')" class="btn-sm btn-danger">✕</button>
             </td>
           </tr>
@@ -317,6 +331,31 @@
         document.getElementById("packageForm").classList.add("hidden");
       }
 
+      function clearPkgErrors() {
+        ["clientName", "clientId", "pkgDescription"].forEach(id => {
+          document.getElementById(id).classList.remove("input-error");
+          document.getElementById(id + "Error").classList.add("hidden");
+        });
+      }
+
+      function validatePkgForm(data) {
+        clearPkgErrors();
+        let valid = true;
+        const fields = [
+          { key: "clientName", id: "clientName" },
+          { key: "clientId", id: "clientId" },
+          { key: "description", id: "pkgDescription" },
+        ];
+        fields.forEach(f => {
+          if (!data[f.key]) {
+            document.getElementById(f.id).classList.add("input-error");
+            document.getElementById(f.id + "Error").classList.remove("hidden");
+            valid = false;
+          }
+        });
+        return valid;
+      }
+
       async function savePackage() {
         const editId = document.getElementById("pkgEditId").value;
         const data = {
@@ -327,10 +366,7 @@
           notes: document.getElementById("pkgNotes").value.trim(),
         };
 
-        if (!data.clientName || !data.clientId || !data.description) {
-          alert("Por favor completá nombre, cédula y descripción.");
-          return;
-        }
+        if (!validatePkgForm(data)) return;
 
         if (editId) {
           await App.updatePackage(editId, data);
@@ -338,6 +374,7 @@
           await App.addPackage(data);
         }
 
+        clearPkgErrors();
         hidePackageForm();
         await loadPackages();
       }
@@ -354,16 +391,6 @@
         document.getElementById("pkgStatus").value = pkg.status;
         document.getElementById("pkgNotes").value = pkg.notes || "";
         document.getElementById("packageForm").classList.remove("hidden");
-      }
-
-      async function advanceStatus(id) {
-        const pkg = allPackages.find(p => p.id === id);
-        if (!pkg) return;
-        const idx = App.STAGES.indexOf(pkg.status);
-        if (idx < App.STAGES.length - 1) {
-          await App.updatePackage(id, { status: App.STAGES[idx + 1] });
-          await loadPackages();
-        }
       }
 
       async function deletePackage(id) {
@@ -430,7 +457,7 @@
           .map(
             p => `
           <tr>
-            <td>${p.image ? `<img src="${p.image}" class="table-thumb" alt="${p.name}" />` : '<span class="text-muted">—</span>'}</td>
+            <td>${p.image ? `<img src="${p.image}" class="table-thumb" alt="${p.name}" />` : '<div class="table-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>'}</td>
             <td><strong>${p.name}</strong></td>
             <td>${p.price ? "$" + Number(p.price).toLocaleString("es-CR") : "—"}</td>
             <td>${p.location ? `<span class="location-badge location-${p.location === "Casa" ? "casa" : "santaana"}">${p.location}</span>` : "—"}</td>
@@ -495,6 +522,31 @@
         document.getElementById("imagePreview").classList.add("hidden");
       }
 
+      function clearProdErrors() {
+        ["prodName", "prodPrice", "prodLocation"].forEach(id => {
+          document.getElementById(id).classList.remove("input-error");
+          document.getElementById(id + "Error").classList.add("hidden");
+        });
+      }
+
+      function validateProdForm(data) {
+        clearProdErrors();
+        let valid = true;
+        const fields = [
+          { key: "name", id: "prodName" },
+          { key: "price", id: "prodPrice" },
+          { key: "location", id: "prodLocation" },
+        ];
+        fields.forEach(f => {
+          if (!data[f.key]) {
+            document.getElementById(f.id).classList.add("input-error");
+            document.getElementById(f.id + "Error").classList.remove("hidden");
+            valid = false;
+          }
+        });
+        return valid;
+      }
+
       async function saveProduct() {
         const editId = document.getElementById("prodEditId").value;
         const data = {
@@ -510,10 +562,7 @@
           data.image = "";
         }
 
-        if (!data.name) {
-          alert("Por favor ingresá el nombre del producto.");
-          return;
-        }
+        if (!validateProdForm(data)) return;
 
         if (editId) {
           await App.updateProduct(editId, data);
@@ -521,6 +570,7 @@
           await App.addProduct(data);
         }
 
+        clearProdErrors();
         hideProductForm();
         await loadProducts();
       }

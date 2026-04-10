@@ -80,6 +80,7 @@ const App = (() => {
         description: data.description,
         status: data.status || STAGES[0],
         notes: data.notes || "",
+        statusUpdatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };
       packages.unshift(pkg);
@@ -91,6 +92,10 @@ const App = (() => {
       const packages = getPackagesFromStorage();
       const idx = packages.findIndex(p => p.id === id);
       if (idx === -1) return;
+      // Track when status changes
+      if (data.status && data.status !== packages[idx].status) {
+        data.statusUpdatedAt = new Date().toISOString();
+      }
       packages[idx] = { ...packages[idx], ...data };
       savePackagesToStorage(packages);
     },
