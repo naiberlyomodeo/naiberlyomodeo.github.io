@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catálogo de Productos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="top-nav">
+      <a href="index.html">Rastreo</a>
+      <a href="catalogo.html" class="active">Catálogo</a>
+    </nav>
+
+    <div class="container">
+      <header>
+        <h1>Catálogo de Productos</h1>
+        <p class="subtitle">Explorá los productos disponibles</p>
+      </header>
+
+      <main>
+        <!-- Filters & View Toggle -->
+        <section class="catalog-toolbar">
+          <div class="search-row">
+            <input
+              type="text"
+              id="catalogSearch"
+              placeholder="Buscar por nombre..."
+              oninput="filterCatalog()"
+            />
+          </div>
+          <div class="toolbar-right">
+            <select id="locationFilter" onchange="filterCatalog()">
+              <option value="">Todas las ubicaciones</option>
+              <option value="Casa">Casa</option>
+              <option value="Santa Ana">Santa Ana</option>
+            </select>
+            <div class="view-toggle">
+              <button id="gridBtn" class="view-btn active" onclick="setView('grid')" title="Vista cuadrícula">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                  <rect x="0" y="0" width="8" height="8" rx="1"/>
+                  <rect x="10" y="0" width="8" height="8" rx="1"/>
+                  <rect x="0" y="10" width="8" height="8" rx="1"/>
+                  <rect x="10" y="10" width="8" height="8" rx="1"/>
+                </svg>
+              </button>
+              <button id="listBtn" class="view-btn" onclick="setView('list')" title="Vista lista">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                  <rect x="0" y="1" width="18" height="4" rx="1"/>
+                  <rect x="0" y="7" width="18" height="4" rx="1"/>
+                  <rect x="0" y="13" width="18" height="4" rx="1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Product Count -->
+        <p id="productCount" class="product-count"></p>
+
+        <!-- Products Grid/List -->
+        <section id="productContainer" class="product-grid"></section>
+
+        <section id="noProducts" class="no-results hidden">
+          <p>No se encontraron productos.</p>
+        </section>
+      </main>
+
+      <footer>
+        <a href="admin.html" class="admin-link">Administración</a>
+      </footer>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script>
+      let allProducts = [];
+      let currentView = "grid";
+
+      async function loadCatalog() {
+        allProducts = await App.getAllProducts();
+        filterCatalog();
+      }
+
+      function filterCatalog() {
+        const query = document.getElementById("catalogSearch").value.toLowerCase().trim();
+        const location = document.getElementById("locationFilter").value;
+
+        let filtered = allProducts;
+
+        if (query) {
+          filtered = filtered.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            (p.notes && p.notes.toLowerCase().includes(query))
+          );
+        }
+
+        if (location) {
+          filtered = filtered.filter(p => p.location === location);
+        }
+
+        renderProducts(filtered);
+      }
+
+      function renderProducts(products) {
+        const container = document.getElementById("productContainer");
+        const noProducts = document.getElementById("noProducts");
+        const countEl = document.getElementById("productCount");
+
+        countEl.textContent = `${products.length} producto${products.length !== 1 ? "s" : ""}`;
+
+        if (products.length === 0) {
+          container.innerHTML = "";
+          noProducts.classList.remove("hidden");
+          return;
+        }
+
+        noProducts.classList.add("hidden");
+
+        container.className = currentView === "grid" ? "product-grid" : "product-list";
+
+        container.innerHTML = products.map(p => {
+          const imgHtml = p.image
+            ? `<div class="product-img"><img src="${p.image}" alt="${p.name}" loading="lazy" /></div>`
+            : `<div class="product-img product-img-placeholder">Sin imagen</div>`;
+
+          const priceHtml = p.price
+            ? `<span class="product-price">$${Number(p.price).toLocaleString("es-CR")}</span>`
+            : "";
+
+          const locationBadge = p.location
+            ? `<span class="location-badge location-${p.location === "Casa" ? "casa" : "santaana"}">${p.location}</span>`
+            : "";
+
+          return `
+            <div class="product-card">
+              ${imgHtml}
+              <div class="product-info">
+                <div class="product-header">
+                  <h3 class="product-name">${p.name}</h3>
+                  ${priceHtml}
+                </div>
+                <div class="product-meta">
+                  ${locationBadge}
+                </div>
+                ${p.notes ? `<p class="product-notes">${p.notes}</p>` : ""}
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function setView(view) {
+        currentView = view;
+        document.getElementById("gridBtn").classList.toggle("active", view === "grid");
+        document.getElementById("listBtn").classList.toggle("active", view === "list");
+        filterCatalog();
+      }
+
+      loadCatalog();
+    </script>
+  </body>
+</html>

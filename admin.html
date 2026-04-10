@@ -7,10 +7,14 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <nav class="top-nav">
+      <a href="index.html">Rastreo</a>
+      <a href="catalogo.html">Catálogo</a>
+    </nav>
+
     <div class="container">
       <header>
-        <h1>📦 Administración</h1>
-        <a href="index.html" class="back-link">← Volver al rastreo</a>
+        <h1>Administración</h1>
       </header>
 
       <!-- Login Section -->
@@ -32,82 +36,170 @@
 
       <!-- Admin Dashboard -->
       <section id="adminSection" class="hidden">
-        <div class="admin-toolbar">
-          <button onclick="showAddForm()" class="btn-primary">+ Nuevo paquete</button>
-          <div class="search-row">
-            <input
-              type="text"
-              id="adminSearch"
-              placeholder="Buscar por cédula o rastreo..."
-              oninput="filterPackages()"
-            />
-          </div>
-          <button onclick="logout()" class="btn-secondary">Cerrar sesión</button>
+
+        <!-- Tab Navigation -->
+        <div class="admin-tabs">
+          <button class="tab-btn active" onclick="switchTab('packages')">📦 Paquetes</button>
+          <button class="tab-btn" onclick="switchTab('catalog')">🛍️ Catálogo</button>
+          <div style="flex:1"></div>
+          <button onclick="logout()" class="btn-secondary btn-sm">Cerrar sesión</button>
         </div>
 
-        <!-- Add/Edit Package Form -->
-        <div id="packageForm" class="form-section hidden">
-          <h3 id="formTitle">Nuevo paquete</h3>
-          <input type="hidden" id="editId" />
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="clientName">Nombre del cliente</label>
-              <input type="text" id="clientName" placeholder="María López" />
-            </div>
-            <div class="form-group">
-              <label for="clientId">Cédula del cliente</label>
-              <input type="text" id="clientId" placeholder="123456789" />
-            </div>
-            <div class="form-group">
-              <label for="trackingNumber">Número de rastreo</label>
-              <input type="text" id="trackingNumber" placeholder="Se genera automáticamente" readonly />
-            </div>
-            <div class="form-group">
-              <label for="description">Descripción del paquete</label>
-              <input type="text" id="description" placeholder="Ej: Zapatos Nike, talla 10" />
-            </div>
-            <div class="form-group">
-              <label for="status">Estado</label>
-              <select id="status"></select>
-            </div>
-            <div class="form-group">
-              <label for="notes">Notas (opcional)</label>
-              <input type="text" id="notes" placeholder="Notas adicionales..." />
+        <!-- ============================================ -->
+        <!-- PACKAGES TAB                                 -->
+        <!-- ============================================ -->
+        <div id="tab-packages" class="tab-content">
+          <div class="admin-toolbar">
+            <button onclick="showAddPackageForm()" class="btn-primary">+ Nuevo paquete</button>
+            <div class="search-row">
+              <input
+                type="text"
+                id="adminSearch"
+                placeholder="Buscar por cédula o rastreo..."
+                oninput="filterPackages()"
+              />
             </div>
           </div>
-          <div class="form-actions">
-            <button onclick="savePackage()" class="btn-primary">Guardar</button>
-            <button onclick="hideForm()" class="btn-secondary">Cancelar</button>
+
+          <!-- Add/Edit Package Form -->
+          <div id="packageForm" class="form-section hidden">
+            <h3 id="pkgFormTitle">Nuevo paquete</h3>
+            <input type="hidden" id="pkgEditId" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="clientName">Nombre del cliente</label>
+                <input type="text" id="clientName" placeholder="María López" />
+              </div>
+              <div class="form-group">
+                <label for="clientId">Cédula del cliente</label>
+                <input type="text" id="clientId" placeholder="123456789" />
+              </div>
+              <div class="form-group">
+                <label for="trackingNumber">Número de rastreo</label>
+                <input type="text" id="trackingNumber" placeholder="Se genera automáticamente" readonly />
+              </div>
+              <div class="form-group">
+                <label for="pkgDescription">Descripción del paquete</label>
+                <input type="text" id="pkgDescription" placeholder="Ej: Zapatos Nike, talla 10" />
+              </div>
+              <div class="form-group">
+                <label for="pkgStatus">Estado</label>
+                <select id="pkgStatus"></select>
+              </div>
+              <div class="form-group">
+                <label for="pkgNotes">Notas (opcional)</label>
+                <input type="text" id="pkgNotes" placeholder="Notas adicionales..." />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button onclick="savePackage()" class="btn-primary">Guardar</button>
+              <button onclick="hidePackageForm()" class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Bulk Update -->
+          <div id="bulkSection" class="hidden">
+            <div class="bulk-bar">
+              <span id="bulkCount">0 seleccionados</span>
+              <select id="bulkStatus"></select>
+              <button onclick="bulkUpdate()" class="btn-primary">Actualizar seleccionados</button>
+              <button onclick="cancelBulk()" class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Package Table -->
+          <div class="table-wrapper">
+            <table id="packageTable">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /></th>
+                  <th>Rastreo</th>
+                  <th>Cliente</th>
+                  <th>Cédula</th>
+                  <th>Descripción</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Bulk Update -->
-        <div id="bulkSection" class="hidden">
-          <div class="bulk-bar">
-            <span id="bulkCount">0 seleccionados</span>
-            <select id="bulkStatus"></select>
-            <button onclick="bulkUpdate()" class="btn-primary">Actualizar seleccionados</button>
-            <button onclick="cancelBulk()" class="btn-secondary">Cancelar</button>
+        <!-- ============================================ -->
+        <!-- CATALOG TAB                                  -->
+        <!-- ============================================ -->
+        <div id="tab-catalog" class="tab-content hidden">
+          <div class="admin-toolbar">
+            <button onclick="showAddProductForm()" class="btn-primary">+ Nuevo producto</button>
+            <div class="search-row">
+              <input
+                type="text"
+                id="catalogAdminSearch"
+                placeholder="Buscar producto..."
+                oninput="filterProducts()"
+              />
+            </div>
+          </div>
+
+          <!-- Add/Edit Product Form -->
+          <div id="productForm" class="form-section hidden">
+            <h3 id="prodFormTitle">Nuevo producto</h3>
+            <input type="hidden" id="prodEditId" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="prodName">Nombre del producto</label>
+                <input type="text" id="prodName" placeholder="Ej: Zapatos Nike Air Max" />
+              </div>
+              <div class="form-group">
+                <label for="prodPrice">Precio ($)</label>
+                <input type="number" id="prodPrice" placeholder="0.00" step="0.01" min="0" />
+              </div>
+              <div class="form-group">
+                <label for="prodLocation">Ubicación</label>
+                <select id="prodLocation">
+                  <option value="">Sin ubicación</option>
+                  <option value="Casa">Casa</option>
+                  <option value="Santa Ana">Santa Ana</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="prodNotes">Notas (opcional)</label>
+                <input type="text" id="prodNotes" placeholder="Color, talla, detalles..." />
+              </div>
+              <div class="form-group form-group-full">
+                <label for="prodImage">Imagen</label>
+                <input type="file" id="prodImage" accept="image/*" onchange="previewImage(event)" />
+                <div id="imagePreview" class="image-preview hidden">
+                  <img id="previewImg" src="" alt="Preview" />
+                  <button onclick="clearImage()" class="btn-sm btn-danger">Quitar imagen</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button onclick="saveProduct()" class="btn-primary">Guardar</button>
+              <button onclick="hideProductForm()" class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Product Table -->
+          <div class="table-wrapper">
+            <table id="productTable">
+              <thead>
+                <tr>
+                  <th>Imagen</th>
+                  <th>Nombre</th>
+                  <th>Precio</th>
+                  <th>Ubicación</th>
+                  <th>Notas</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="prodTableBody"></tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Package Table -->
-        <div class="table-wrapper">
-          <table id="packageTable">
-            <thead>
-              <tr>
-                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /></th>
-                <th>Rastreo</th>
-                <th>Cliente</th>
-                <th>Cédula</th>
-                <th>Descripción</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
       </section>
     </div>
 
@@ -115,15 +207,20 @@
     <script src="app.js"></script>
     <script>
       let allPackages = [];
+      let allProducts = [];
+      let currentImageData = "";
 
-      // Populate status dropdowns
-      function populateStatusDropdowns() {
-        const selects = [document.getElementById("status"), document.getElementById("bulkStatus")];
-        selects.forEach(sel => {
-          sel.innerHTML = App.STAGES.map(s => `<option value="${s}">${s}</option>`).join("");
-        });
+      // ---- Tab Switching ----
+      function switchTab(tab) {
+        document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+        document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+        document.getElementById(`tab-${tab === "packages" ? "packages" : "catalog"}`).classList.remove("hidden");
+        event.target.classList.add("active");
+
+        if (tab === "catalog") loadProducts();
       }
 
+      // ---- Auth ----
       async function login() {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
@@ -152,24 +249,32 @@
         await loadPackages();
       }
 
+      // ---- Packages ----
+      function populateStatusDropdowns() {
+        const selects = [document.getElementById("pkgStatus"), document.getElementById("bulkStatus")];
+        selects.forEach(sel => {
+          sel.innerHTML = App.STAGES.map(s => `<option value="${s}">${s}</option>`).join("");
+        });
+      }
+
       async function loadPackages() {
         allPackages = await App.getAllPackages();
-        renderTable(allPackages);
+        renderPackageTable(allPackages);
       }
 
       function filterPackages() {
         const q = document.getElementById("adminSearch").value.toLowerCase().trim();
-        if (!q) return renderTable(allPackages);
+        if (!q) return renderPackageTable(allPackages);
         const filtered = allPackages.filter(
           p =>
             p.clientId.toLowerCase().includes(q) ||
             p.trackingNumber.toLowerCase().includes(q) ||
             p.clientName.toLowerCase().includes(q)
         );
-        renderTable(filtered);
+        renderPackageTable(filtered);
       }
 
-      function renderTable(packages) {
+      function renderPackageTable(packages) {
         const tbody = document.getElementById("tableBody");
         if (packages.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay paquetes</td></tr>';
@@ -196,30 +301,30 @@
           .join("");
       }
 
-      function showAddForm() {
-        document.getElementById("formTitle").textContent = "Nuevo paquete";
-        document.getElementById("editId").value = "";
+      function showAddPackageForm() {
+        document.getElementById("pkgFormTitle").textContent = "Nuevo paquete";
+        document.getElementById("pkgEditId").value = "";
         document.getElementById("clientName").value = "";
         document.getElementById("clientId").value = "";
         document.getElementById("trackingNumber").value = "Se genera automáticamente";
-        document.getElementById("description").value = "";
-        document.getElementById("status").value = App.STAGES[0];
-        document.getElementById("notes").value = "";
+        document.getElementById("pkgDescription").value = "";
+        document.getElementById("pkgStatus").value = App.STAGES[0];
+        document.getElementById("pkgNotes").value = "";
         document.getElementById("packageForm").classList.remove("hidden");
       }
 
-      function hideForm() {
+      function hidePackageForm() {
         document.getElementById("packageForm").classList.add("hidden");
       }
 
       async function savePackage() {
-        const editId = document.getElementById("editId").value;
+        const editId = document.getElementById("pkgEditId").value;
         const data = {
           clientName: document.getElementById("clientName").value.trim(),
           clientId: document.getElementById("clientId").value.trim(),
-          description: document.getElementById("description").value.trim(),
-          status: document.getElementById("status").value,
-          notes: document.getElementById("notes").value.trim(),
+          description: document.getElementById("pkgDescription").value.trim(),
+          status: document.getElementById("pkgStatus").value,
+          notes: document.getElementById("pkgNotes").value.trim(),
         };
 
         if (!data.clientName || !data.clientId || !data.description) {
@@ -233,21 +338,21 @@
           await App.addPackage(data);
         }
 
-        hideForm();
+        hidePackageForm();
         await loadPackages();
       }
 
       function editPackage(id) {
         const pkg = allPackages.find(p => p.id === id);
         if (!pkg) return;
-        document.getElementById("formTitle").textContent = "Editar paquete";
-        document.getElementById("editId").value = pkg.id;
+        document.getElementById("pkgFormTitle").textContent = "Editar paquete";
+        document.getElementById("pkgEditId").value = pkg.id;
         document.getElementById("clientName").value = pkg.clientName;
         document.getElementById("clientId").value = pkg.clientId;
         document.getElementById("trackingNumber").value = pkg.trackingNumber;
-        document.getElementById("description").value = pkg.description;
-        document.getElementById("status").value = pkg.status;
-        document.getElementById("notes").value = pkg.notes || "";
+        document.getElementById("pkgDescription").value = pkg.description;
+        document.getElementById("pkgStatus").value = pkg.status;
+        document.getElementById("pkgNotes").value = pkg.notes || "";
         document.getElementById("packageForm").classList.remove("hidden");
       }
 
@@ -267,7 +372,6 @@
         await loadPackages();
       }
 
-      // Bulk operations
       function toggleSelectAll() {
         const checked = document.getElementById("selectAll").checked;
         document.querySelectorAll(".pkg-check").forEach(cb => (cb.checked = checked));
@@ -301,12 +405,157 @@
         document.getElementById("bulkSection").classList.add("hidden");
       }
 
-      // Check if already logged in
+      // ---- Catalog / Products ----
+      async function loadProducts() {
+        allProducts = await App.getAllProducts();
+        renderProductTable(allProducts);
+      }
+
+      function filterProducts() {
+        const q = document.getElementById("catalogAdminSearch").value.toLowerCase().trim();
+        if (!q) return renderProductTable(allProducts);
+        const filtered = allProducts.filter(
+          p => p.name.toLowerCase().includes(q) || (p.notes && p.notes.toLowerCase().includes(q))
+        );
+        renderProductTable(filtered);
+      }
+
+      function renderProductTable(products) {
+        const tbody = document.getElementById("prodTableBody");
+        if (products.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay productos</td></tr>';
+          return;
+        }
+        tbody.innerHTML = products
+          .map(
+            p => `
+          <tr>
+            <td>${p.image ? `<img src="${p.image}" class="table-thumb" alt="${p.name}" />` : '<span class="text-muted">—</span>'}</td>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.price ? "$" + Number(p.price).toLocaleString("es-CR") : "—"}</td>
+            <td>${p.location ? `<span class="location-badge location-${p.location === "Casa" ? "casa" : "santaana"}">${p.location}</span>` : "—"}</td>
+            <td>${p.notes || "—"}</td>
+            <td class="actions">
+              <button onclick="editProduct('${p.id}')" class="btn-sm">Editar</button>
+              <button onclick="deleteProduct('${p.id}')" class="btn-sm btn-danger">✕</button>
+            </td>
+          </tr>
+        `
+          )
+          .join("");
+      }
+
+      function showAddProductForm() {
+        document.getElementById("prodFormTitle").textContent = "Nuevo producto";
+        document.getElementById("prodEditId").value = "";
+        document.getElementById("prodName").value = "";
+        document.getElementById("prodPrice").value = "";
+        document.getElementById("prodLocation").value = "";
+        document.getElementById("prodNotes").value = "";
+        document.getElementById("prodImage").value = "";
+        currentImageData = "";
+        document.getElementById("imagePreview").classList.add("hidden");
+        document.getElementById("productForm").classList.remove("hidden");
+      }
+
+      function hideProductForm() {
+        document.getElementById("productForm").classList.add("hidden");
+      }
+
+      function previewImage(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Resize to keep localStorage manageable
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement("canvas");
+            const MAX = 400;
+            let w = img.width;
+            let h = img.height;
+            if (w > h) { h = h * (MAX / w); w = MAX; }
+            else { w = w * (MAX / h); h = MAX; }
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+            currentImageData = canvas.toDataURL("image/jpeg", 0.7);
+            document.getElementById("previewImg").src = currentImageData;
+            document.getElementById("imagePreview").classList.remove("hidden");
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function clearImage() {
+        currentImageData = "";
+        document.getElementById("prodImage").value = "";
+        document.getElementById("imagePreview").classList.add("hidden");
+      }
+
+      async function saveProduct() {
+        const editId = document.getElementById("prodEditId").value;
+        const data = {
+          name: document.getElementById("prodName").value.trim(),
+          price: document.getElementById("prodPrice").value,
+          location: document.getElementById("prodLocation").value,
+          notes: document.getElementById("prodNotes").value.trim(),
+        };
+
+        if (currentImageData) {
+          data.image = currentImageData;
+        } else if (!editId) {
+          data.image = "";
+        }
+
+        if (!data.name) {
+          alert("Por favor ingresá el nombre del producto.");
+          return;
+        }
+
+        if (editId) {
+          await App.updateProduct(editId, data);
+        } else {
+          await App.addProduct(data);
+        }
+
+        hideProductForm();
+        await loadProducts();
+      }
+
+      function editProduct(id) {
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+        document.getElementById("prodFormTitle").textContent = "Editar producto";
+        document.getElementById("prodEditId").value = p.id;
+        document.getElementById("prodName").value = p.name;
+        document.getElementById("prodPrice").value = p.price || "";
+        document.getElementById("prodLocation").value = p.location || "";
+        document.getElementById("prodNotes").value = p.notes || "";
+        document.getElementById("prodImage").value = "";
+        currentImageData = p.image || "";
+        if (p.image) {
+          document.getElementById("previewImg").src = p.image;
+          document.getElementById("imagePreview").classList.remove("hidden");
+        } else {
+          document.getElementById("imagePreview").classList.add("hidden");
+        }
+        document.getElementById("productForm").classList.remove("hidden");
+      }
+
+      async function deleteProduct(id) {
+        if (!confirm("¿Estás segura de que querés eliminar este producto?")) return;
+        await App.deleteProduct(id);
+        await loadProducts();
+      }
+
+      // ---- Init ----
       if (App.isLoggedIn()) {
         showAdmin();
       }
 
-      // Allow Enter on login
       document.getElementById("password").addEventListener("keydown", (e) => {
         if (e.key === "Enter") login();
       });

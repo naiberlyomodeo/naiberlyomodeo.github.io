@@ -15,7 +15,9 @@ const App = (() => {
   ];
 
   const STORAGE_KEY = "rastreo_packages";
+  const CATALOG_KEY = "rastreo_catalog";
   const AUTH_KEY = "rastreo_auth";
+  const LOCATIONS = ["Casa", "Santa Ana"];
 
   // Demo admin credentials
   const DEMO_EMAIL = "admin@demo.com";
@@ -38,6 +40,18 @@ const App = (() => {
 
   function savePackagesToStorage(packages) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(packages));
+  }
+
+  function getProductsFromStorage() {
+    try {
+      return JSON.parse(localStorage.getItem(CATALOG_KEY)) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveProductsToStorage(products) {
+    localStorage.setItem(CATALOG_KEY, JSON.stringify(products));
   }
 
   // ---- Demo Mode (localStorage) ----
@@ -101,6 +115,41 @@ const App = (() => {
     isLoggedIn() {
       return sessionStorage.getItem(AUTH_KEY) === "true";
     },
+
+    // ---- Catalog ----
+
+    async getAllProducts() {
+      return getProductsFromStorage();
+    },
+
+    async addProduct(data) {
+      const products = getProductsFromStorage();
+      const product = {
+        id: crypto.randomUUID(),
+        name: data.name,
+        price: data.price || "",
+        notes: data.notes || "",
+        location: data.location || "",
+        image: data.image || "",
+        createdAt: new Date().toISOString(),
+      };
+      products.unshift(product);
+      saveProductsToStorage(products);
+      return product;
+    },
+
+    async updateProduct(id, data) {
+      const products = getProductsFromStorage();
+      const idx = products.findIndex(p => p.id === id);
+      if (idx === -1) return;
+      products[idx] = { ...products[idx], ...data };
+      saveProductsToStorage(products);
+    },
+
+    async deleteProduct(id) {
+      const products = getProductsFromStorage().filter(p => p.id !== id);
+      saveProductsToStorage(products);
+    },
   };
 
   // ---- Firebase Mode ----
@@ -135,17 +184,34 @@ const App = (() => {
     isLoggedIn() {
       return demo.isLoggedIn();
     },
+    async getAllProducts() {
+      return demo.getAllProducts();
+    },
+    async addProduct(data) {
+      return demo.addProduct(data);
+    },
+    async updateProduct(id, data) {
+      return demo.updateProduct(id, data);
+    },
+    async deleteProduct(id) {
+      return demo.deleteProduct(id);
+    },
   };
 
   const backend = typeof DEMO_MODE !== "undefined" && DEMO_MODE ? demo : firebase;
 
   return {
     STAGES,
+    LOCATIONS,
     searchPackages: (q) => backend.searchPackages(q),
     getAllPackages: () => backend.getAllPackages(),
     addPackage: (d) => backend.addPackage(d),
     updatePackage: (id, d) => backend.updatePackage(id, d),
     deletePackage: (id) => backend.deletePackage(id),
+    getAllProducts: () => backend.getAllProducts(),
+    addProduct: (d) => backend.addProduct(d),
+    updateProduct: (id, d) => backend.updateProduct(id, d),
+    deleteProduct: (id) => backend.deleteProduct(id),
     login: (e, p) => backend.login(e, p),
     logout: () => backend.logout(),
     isLoggedIn: () => backend.isLoggedIn(),
