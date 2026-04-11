@@ -35,6 +35,12 @@
     <script src="demo-data.js"></script>
     <script src="app.js"></script>
     <script>
+      // ---- Theme ----
+      (function() {
+        const saved = localStorage.getItem("rastreo_theme");
+        if (saved === "light") document.documentElement.setAttribute("data-theme", "light");
+      })();
+
       // If already logged in, redirect
       if (App.isLoggedIn()) {
         const user = App.getUser();
