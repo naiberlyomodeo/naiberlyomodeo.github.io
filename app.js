@@ -20,13 +20,8 @@ const App = (() => {
   const AUTH_KEY = "rastreo_auth";
   const LOCATIONS = ["Casa", "Santa Ana"];
 
-  // Demo users: { username, password, role, cedula (for clients) }
-  const DEMO_USERS = [
-    { username: "nay", password: "test", role: "admin", name: "Naiberly" },
-    { username: "mike", password: "test", role: "admin", name: "Michael" },
-    { username: "nay2", password: "test", role: "client", name: "Naiberly (Cliente)", cedula: "111111111" },
-    { username: "mike2", password: "test", role: "client", name: "Michael (Cliente)", cedula: "222222222" },
-  ];
+  // Demo users come from demo-data.js (DEMO_DATA.users)
+  // Remove demo-data.js when connecting to Firebase.
 
   // ---- Helpers ----
 
@@ -135,7 +130,8 @@ const App = (() => {
     },
 
     async login(username, password) {
-      const user = DEMO_USERS.find(u => u.username === username && u.password === password);
+      const users = (typeof DEMO_DATA !== "undefined" && DEMO_DATA.users) || [];
+      const user = users.find(u => u.username === username && u.password === password);
       if (user) {
         sessionStorage.setItem(AUTH_KEY, JSON.stringify({
           username: user.username,
