@@ -55,18 +55,15 @@
             <div class="form-grid">
               <div class="form-group">
                 <label for="clientName">Nombre del cliente <span class="required">*</span></label>
-                <input type="text" id="clientName" placeholder="María López" />
-                <span class="field-error hidden" id="clientNameError">Este campo es obligatorio</span>
+                <input type="text" id="clientName" placeholder="María López" oninput="checkPkgFields()" />
               </div>
               <div class="form-group">
                 <label for="clientId">Cédula del cliente <span class="required">*</span></label>
-                <input type="text" id="clientId" placeholder="123456789" />
-                <span class="field-error hidden" id="clientIdError">Este campo es obligatorio</span>
+                <input type="text" id="clientId" placeholder="123456789" oninput="checkPkgFields()" />
               </div>
               <div class="form-group">
                 <label for="pkgDescription">Descripción del paquete <span class="required">*</span></label>
-                <input type="text" id="pkgDescription" placeholder="Ej: Zapatos Nike, talla 10" />
-                <span class="field-error hidden" id="pkgDescriptionError">Este campo es obligatorio</span>
+                <input type="text" id="pkgDescription" placeholder="Ej: Zapatos Nike, talla 10" oninput="checkPkgFields()" />
               </div>
               <div class="form-group">
                 <label for="pkgStatus">Estado <span class="required">*</span></label>
@@ -78,7 +75,7 @@
               </div>
             </div>
             <div class="form-actions">
-              <button onclick="savePackage()" class="btn-primary">Guardar</button>
+              <button onclick="savePackage()" class="btn-primary" id="pkgSaveBtn" disabled>Guardar</button>
               <button onclick="hidePackageForm()" class="btn-secondary">Cancelar</button>
             </div>
           </div>
@@ -138,8 +135,7 @@
             <div class="form-grid">
               <div class="form-group">
                 <label for="prodName">Nombre del producto <span class="required">*</span></label>
-                <input type="text" id="prodName" placeholder="Ej: Zapatos Nike Air Max" />
-                <span class="field-error hidden" id="prodNameError">Este campo es obligatorio</span>
+                <input type="text" id="prodName" placeholder="Ej: Zapatos Nike Air Max" oninput="checkProdFields()" />
               </div>
               <div class="form-group">
                 <label for="prodPrice">Precio <span class="required">*</span></label>
@@ -148,18 +144,16 @@
                     <option value="CRC">CRC</option>
                     <option value="USD">USD</option>
                   </select>
-                  <input type="number" id="prodPrice" placeholder="0.00" step="0.01" min="0" />
+                  <input type="number" id="prodPrice" placeholder="0.00" step="0.01" min="0" oninput="checkProdFields()" />
                 </div>
-                <span class="field-error hidden" id="prodPriceError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
                 <label for="prodLocation">Bodega <span class="required">*</span></label>
-                <select id="prodLocation">
+                <select id="prodLocation" onchange="checkProdFields()">
                   <option value="">Seleccionar...</option>
                   <option value="Casa">Casa</option>
                   <option value="Santa Ana">Santa Ana</option>
                 </select>
-                <span class="field-error hidden" id="prodLocationError">Este campo es obligatorio</span>
               </div>
               <div class="form-group">
                 <label for="prodNotes">Notas (opcional)</label>
@@ -175,7 +169,7 @@
               </div>
             </div>
             <div class="form-actions">
-              <button onclick="saveProduct()" class="btn-primary">Guardar</button>
+              <button onclick="saveProduct()" class="btn-primary" id="prodSaveBtn" disabled>Guardar</button>
               <button onclick="hideProductForm()" class="btn-secondary">Cancelar</button>
             </div>
           </div>
@@ -224,18 +218,15 @@
             <div class="form-grid">
               <div class="form-group">
                 <label for="cliName">Nombre completo <span class="required">*</span></label>
-                <input type="text" id="cliName" placeholder="María López" />
-                <span class="field-error hidden" id="cliNameError">Este campo es obligatorio</span>
+                <input type="text" id="cliName" placeholder="María López" oninput="checkClientFields()" />
               </div>
               <div class="form-group">
                 <label for="cliCedula">Cédula <span class="required">*</span></label>
-                <input type="text" id="cliCedula" placeholder="123456789" />
-                <span class="field-error hidden" id="cliCedulaError">Este campo es obligatorio</span>
+                <input type="text" id="cliCedula" placeholder="123456789" oninput="checkClientFields()" />
               </div>
               <div class="form-group">
                 <label for="cliPhone">Teléfono <span class="required">*</span></label>
-                <input type="text" id="cliPhone" placeholder="8888-8888" />
-                <span class="field-error hidden" id="cliPhoneError">Este campo es obligatorio</span>
+                <input type="text" id="cliPhone" placeholder="8888-8888" oninput="checkClientFields()" />
               </div>
               <div class="form-group">
                 <label for="cliEmail">Correo electrónico (opcional)</label>
@@ -251,7 +242,7 @@
               </div>
             </div>
             <div class="form-actions">
-              <button onclick="saveClient()" class="btn-primary">Guardar</button>
+              <button onclick="saveClient()" class="btn-primary" id="clientSaveBtn" disabled>Guardar</button>
               <button onclick="hideClientForm()" class="btn-secondary">Cancelar</button>
             </div>
           </div>
@@ -308,11 +299,29 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span>Clientes</span>
       </a>
+      <a href="#" class="bottom-nav-item" id="adminSettingsNavItem" onclick="toggleSettings(); return false;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Ajustes</span>
+      </a>
       <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>Salir</span>
       </a>
     </nav>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-overlay hidden" onclick="if(event.target===this)closeSettings()">
+      <div class="settings-sheet">
+        <h3>Ajustes</h3>
+        <div class="theme-toggle-row">
+          <span>Modo claro</span>
+          <label class="theme-switch">
+            <input type="checkbox" id="themeToggle" onchange="toggleTheme(this.checked)">
+            <span class="theme-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
 
     <script src="firebase-config.js"></script>
     <script src="demo-data.js"></script>
@@ -358,6 +367,7 @@
         const items = document.querySelectorAll("#adminBottomNav .bottom-nav-item");
         items.forEach(i => i.classList.remove("active"));
         if (items[tabMap[tab]]) items[tabMap[tab]].classList.add("active");
+        closeSettings();
       }
 
       // ---- FAB ----
@@ -413,6 +423,30 @@
         } else {
           icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
         }
+      }
+      function toggleTheme(isLight) { applyTheme(isLight); }
+      function toggleSettings() {
+        const modal = document.getElementById("settingsModal");
+        const item = document.getElementById("adminSettingsNavItem");
+        const items = document.querySelectorAll("#adminBottomNav .bottom-nav-item");
+        if (modal.classList.contains("hidden")) {
+          // Deactivate all other bottom nav items, activate settings
+          items.forEach(i => { if (i !== item) i.classList.remove("active"); });
+          modal.classList.remove("hidden");
+          item.classList.add("active");
+        } else {
+          modal.classList.add("hidden");
+          item.classList.remove("active");
+          // Re-activate the current tab
+          syncBottomNav(currentTab);
+        }
+      }
+      function closeSettings() {
+        const modal = document.getElementById("settingsModal");
+        if (!modal) return;
+        modal.classList.add("hidden");
+        const item = document.getElementById("adminSettingsNavItem");
+        if (item) item.classList.remove("active");
       }
       initTheme();
 
@@ -521,36 +555,24 @@
         document.getElementById("pkgDescription").value = "";
         document.getElementById("pkgStatus").value = App.STAGES[0];
         document.getElementById("pkgNotes").value = "";
+        document.getElementById("pkgSaveBtn").disabled = true;
         document.getElementById("packageForm").classList.remove("hidden");
+        // Hide list underneath
+        document.querySelector("#tab-packages .table-wrapper").classList.add("hidden");
+        document.getElementById("packageCards").classList.add("hidden");
       }
 
       function hidePackageForm() {
         document.getElementById("packageForm").classList.add("hidden");
+        document.querySelector("#tab-packages .table-wrapper").classList.remove("hidden");
+        document.getElementById("packageCards").classList.remove("hidden");
       }
 
-      function clearPkgErrors() {
-        ["clientName", "clientId", "pkgDescription"].forEach(id => {
-          document.getElementById(id).classList.remove("input-error");
-          document.getElementById(id + "Error").classList.add("hidden");
-        });
-      }
-
-      function validatePkgForm(data) {
-        clearPkgErrors();
-        let valid = true;
-        const fields = [
-          { key: "clientName", id: "clientName" },
-          { key: "clientId", id: "clientId" },
-          { key: "description", id: "pkgDescription" },
-        ];
-        fields.forEach(f => {
-          if (!data[f.key]) {
-            document.getElementById(f.id).classList.add("input-error");
-            document.getElementById(f.id + "Error").classList.remove("hidden");
-            valid = false;
-          }
-        });
-        return valid;
+      function checkPkgFields() {
+        const ok = document.getElementById("clientName").value.trim()
+          && document.getElementById("clientId").value.trim()
+          && document.getElementById("pkgDescription").value.trim();
+        document.getElementById("pkgSaveBtn").disabled = !ok;
       }
 
       async function savePackage() {
@@ -563,15 +585,12 @@
           notes: document.getElementById("pkgNotes").value.trim(),
         };
 
-        if (!validatePkgForm(data)) return;
-
         if (editId) {
           await App.updatePackage(editId, data);
         } else {
           await App.addPackage(data);
         }
 
-        clearPkgErrors();
         hidePackageForm();
         await loadPackages();
       }
@@ -586,7 +605,10 @@
         document.getElementById("pkgDescription").value = pkg.description;
         document.getElementById("pkgStatus").value = pkg.status;
         document.getElementById("pkgNotes").value = pkg.notes || "";
+        checkPkgFields();
         document.getElementById("packageForm").classList.remove("hidden");
+        document.querySelector("#tab-packages .table-wrapper").classList.add("hidden");
+        document.getElementById("packageCards").classList.add("hidden");
       }
 
       function deletePackage(id) {
@@ -704,12 +726,18 @@
         document.getElementById("prodNotes").value = "";
         document.getElementById("prodImage").value = "";
         currentImageData = "";
+        document.getElementById("prodSaveBtn").disabled = true;
         document.getElementById("imagePreview").classList.add("hidden");
         document.getElementById("productForm").classList.remove("hidden");
+        // Hide list underneath
+        document.querySelector("#tab-catalog .table-wrapper").classList.add("hidden");
+        document.getElementById("productCards").classList.add("hidden");
       }
 
       function hideProductForm() {
         document.getElementById("productForm").classList.add("hidden");
+        document.querySelector("#tab-catalog .table-wrapper").classList.remove("hidden");
+        document.getElementById("productCards").classList.remove("hidden");
       }
 
       function previewImage(e) {
@@ -745,29 +773,11 @@
         document.getElementById("imagePreview").classList.add("hidden");
       }
 
-      function clearProdErrors() {
-        ["prodName", "prodPrice", "prodLocation"].forEach(id => {
-          document.getElementById(id).classList.remove("input-error");
-          document.getElementById(id + "Error").classList.add("hidden");
-        });
-      }
-
-      function validateProdForm(data) {
-        clearProdErrors();
-        let valid = true;
-        const fields = [
-          { key: "name", id: "prodName" },
-          { key: "price", id: "prodPrice" },
-          { key: "location", id: "prodLocation" },
-        ];
-        fields.forEach(f => {
-          if (!data[f.key]) {
-            document.getElementById(f.id).classList.add("input-error");
-            document.getElementById(f.id + "Error").classList.remove("hidden");
-            valid = false;
-          }
-        });
-        return valid;
+      function checkProdFields() {
+        const ok = document.getElementById("prodName").value.trim()
+          && document.getElementById("prodPrice").value
+          && document.getElementById("prodLocation").value;
+        document.getElementById("prodSaveBtn").disabled = !ok;
       }
 
       async function saveProduct() {
@@ -786,15 +796,12 @@
           data.image = "";
         }
 
-        if (!validateProdForm(data)) return;
-
         if (editId) {
           await App.updateProduct(editId, data);
         } else {
           await App.addProduct(data);
         }
 
-        clearProdErrors();
         hideProductForm();
         await loadProducts();
       }
@@ -817,7 +824,10 @@
         } else {
           document.getElementById("imagePreview").classList.add("hidden");
         }
+        checkProdFields();
         document.getElementById("productForm").classList.remove("hidden");
+        document.querySelector("#tab-catalog .table-wrapper").classList.add("hidden");
+        document.getElementById("productCards").classList.add("hidden");
       }
 
       function deleteProduct(id) {
@@ -904,37 +914,24 @@
         document.getElementById("cliEmail").value = "";
         document.getElementById("cliAddress").value = "";
         document.getElementById("cliNotes").value = "";
-        clearClientErrors();
+        document.getElementById("clientSaveBtn").disabled = true;
         document.getElementById("clientForm").classList.remove("hidden");
+        // Hide list underneath
+        document.querySelector("#tab-clients .table-wrapper").classList.add("hidden");
+        document.getElementById("clientCards").classList.add("hidden");
       }
 
       function hideClientForm() {
         document.getElementById("clientForm").classList.add("hidden");
+        document.querySelector("#tab-clients .table-wrapper").classList.remove("hidden");
+        document.getElementById("clientCards").classList.remove("hidden");
       }
 
-      function clearClientErrors() {
-        ["cliName", "cliCedula", "cliPhone"].forEach(id => {
-          document.getElementById(id).classList.remove("input-error");
-          document.getElementById(id + "Error").classList.add("hidden");
-        });
-      }
-
-      function validateClientForm(data) {
-        clearClientErrors();
-        let valid = true;
-        const fields = [
-          { key: "name", id: "cliName" },
-          { key: "cedula", id: "cliCedula" },
-          { key: "phone", id: "cliPhone" },
-        ];
-        fields.forEach(f => {
-          if (!data[f.key]) {
-            document.getElementById(f.id).classList.add("input-error");
-            document.getElementById(f.id + "Error").classList.remove("hidden");
-            valid = false;
-          }
-        });
-        return valid;
+      function checkClientFields() {
+        const ok = document.getElementById("cliName").value.trim()
+          && document.getElementById("cliCedula").value.trim()
+          && document.getElementById("cliPhone").value.trim();
+        document.getElementById("clientSaveBtn").disabled = !ok;
       }
 
       async function saveClient() {
@@ -948,15 +945,12 @@
           notes: document.getElementById("cliNotes").value.trim(),
         };
 
-        if (!validateClientForm(data)) return;
-
         if (editId) {
           await App.updateClient(editId, data);
         } else {
           await App.addClient(data);
         }
 
-        clearClientErrors();
         hideClientForm();
         await loadClients();
       }
@@ -972,8 +966,10 @@
         document.getElementById("cliEmail").value = c.email || "";
         document.getElementById("cliAddress").value = c.address || "";
         document.getElementById("cliNotes").value = c.notes || "";
-        clearClientErrors();
+        checkClientFields();
         document.getElementById("clientForm").classList.remove("hidden");
+        document.querySelector("#tab-clients .table-wrapper").classList.add("hidden");
+        document.getElementById("clientCards").classList.add("hidden");
       }
 
       function deleteClient(id) {
@@ -1026,12 +1022,6 @@
         window.location.href = "index.html";
       }
 
-      document.getElementById("password").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") login();
-      });
-      document.getElementById("username").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") login();
-      });
     </script>
   </body>
 </html>

@@ -53,6 +53,16 @@
         <section id="noPacketsClient" class="no-results hidden">
           <p>No tenés paquetes registrados en este momento.</p>
         </section>
+
+        <!-- Entregados section (clients only) -->
+        <section id="entregadosSection" class="results-section hidden">
+          <h2 id="entregadosTitle"></h2>
+          <div id="entregadosList"></div>
+        </section>
+
+        <section id="noEntregados" class="no-results hidden">
+          <p>No tenés paquetes entregados aún.</p>
+        </section>
       </main>
 
       <footer></footer>
@@ -60,9 +70,13 @@
 
     <!-- Bottom Navigation (mobile) -->
     <nav class="bottom-nav" id="bottomNav">
-      <a href="rastreo.html" class="bottom-nav-item active">
+      <a href="rastreo.html" class="bottom-nav-item active" id="rastreoNavItem">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Rastreo</span>
+      </a>
+      <a href="#" class="bottom-nav-item hidden" id="entregadosNavItem" onclick="showEntregados(); return false;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Entregados</span>
       </a>
       <a href="catalogo.html" class="bottom-nav-item">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
@@ -98,6 +112,7 @@
     <script>
       const user = App.getUser();
       const isClient = user && user.role === "client";
+      let currentClientView = "rastreo"; // "rastreo" or "entregados"
 
       // Show user info in nav for all users
       if (user) {
@@ -115,6 +130,11 @@
         document.getElementById("bottomAuthIcon").innerHTML = '<path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>';
       }
 
+      // Show Entregados tab for logged-in clients
+      if (isClient) {
+        document.getElementById("entregadosNavItem").classList.remove("hidden");
+      }
+
       // Client mode: auto-load packages, hide search
       if (isClient) {
         document.getElementById("searchSection").classList.add("hidden");
@@ -123,22 +143,92 @@
         loadClientPackages();
       }
 
+      function sortPackages(packages) {
+        const stages = App.STAGES;
+        return packages.sort((a, b) => {
+          const idxA = stages.indexOf(a.status);
+          const idxB = stages.indexOf(b.status);
+          if (idxA !== idxB) return idxA - idxB; // Earlier stages first, Entregado last
+          // Same status: most recently updated first
+          const dateA = a.statusUpdatedAt ? new Date(a.statusUpdatedAt).getTime() : 0;
+          const dateB = b.statusUpdatedAt ? new Date(b.statusUpdatedAt).getTime() : 0;
+          return dateB - dateA;
+        });
+      }
+
       async function loadClientPackages() {
-        const packages = await App.searchPackages(user.cedula);
+        const allPackages = await App.searchPackages(user.cedula);
+        // Split into active vs delivered
+        const active = sortPackages(allPackages.filter(p => p.status !== "Entregado"));
+        const delivered = sortPackages(allPackages.filter(p => p.status === "Entregado"));
+
         const results = document.getElementById("results");
         const packageList = document.getElementById("packageList");
         const resultsTitle = document.getElementById("resultsTitle");
         const noPackets = document.getElementById("noPacketsClient");
 
-        if (packages.length === 0) {
+        if (active.length === 0) {
           noPackets.classList.remove("hidden");
+        } else {
+          resultsTitle.textContent = `Tus paquetes: ${active.length}`;
+          packageList.innerHTML = active.map(pkg => renderPackageCard(pkg)).join("");
+          results.classList.remove("hidden");
+        }
+
+        // Preload entregados
+        window._entregados = delivered;
+      }
+
+      function showEntregados() {
+        currentClientView = "entregados";
+        closeSettings();
+        // Update bottom nav active states
+        document.querySelectorAll("#bottomNav .bottom-nav-item").forEach(i => i.classList.remove("active"));
+        document.getElementById("entregadosNavItem").classList.add("active");
+
+        // Hide rastreo sections
+        document.getElementById("results").classList.add("hidden");
+        document.getElementById("noResults").classList.add("hidden");
+        document.getElementById("noPacketsClient").classList.add("hidden");
+        document.getElementById("searchSection").classList.add("hidden");
+
+        const section = document.getElementById("entregadosSection");
+        const list = document.getElementById("entregadosList");
+        const title = document.getElementById("entregadosTitle");
+        const noEnt = document.getElementById("noEntregados");
+
+        section.classList.add("hidden");
+        noEnt.classList.add("hidden");
+
+        const delivered = window._entregados || [];
+        document.getElementById("pageSubtitle").textContent = "Paquetes entregados";
+
+        if (delivered.length === 0) {
+          noEnt.classList.remove("hidden");
           return;
         }
 
-        resultsTitle.textContent = `Tus paquetes: ${packages.length}`;
-        packageList.innerHTML = packages.map(pkg => renderPackageCard(pkg)).join("");
-        results.classList.remove("hidden");
+        title.textContent = `Entregados: ${delivered.length}`;
+        list.innerHTML = delivered.map(pkg => renderPackageCard(pkg)).join("");
+        section.classList.remove("hidden");
       }
+
+      // Handle clicking back to Rastreo tab
+      document.getElementById("rastreoNavItem").addEventListener("click", function(e) {
+        if (isClient && currentClientView === "entregados") {
+          e.preventDefault();
+          currentClientView = "rastreo";
+          closeSettings();
+          document.querySelectorAll("#bottomNav .bottom-nav-item").forEach(i => i.classList.remove("active"));
+          document.getElementById("rastreoNavItem").classList.add("active");
+          document.getElementById("entregadosSection").classList.add("hidden");
+          document.getElementById("noEntregados").classList.add("hidden");
+          const firstName = user.name.replace(/\s*\(.*\)/, "");
+          document.getElementById("pageSubtitle").textContent = `Hola ${firstName}, estos son tus paquetes`;
+          // Re-show active packages
+          loadClientPackages();
+        }
+      });
 
       // Guest mode: debounced search
       let searchTimer = null;
@@ -162,7 +252,8 @@
         packageList.innerHTML = '<p class="loading">Buscando...</p>';
         results.classList.remove("hidden");
 
-        const packages = await App.searchByTracking(query);
+        let packages = await App.searchByTracking(query);
+        packages = sortPackages(packages);
 
         if (packages.length === 0) {
           results.classList.add("hidden");
@@ -197,11 +288,11 @@
               <span class="status-badge status-${currentIndex}">${pkg.status}</span>
             </div>
             <p class="card-description">${pkg.description}</p>
+            ${pkg.notes ? `<p class="card-notes">Notas: ${pkg.notes}</p>` : ""}
             <div class="progress-bar">
               ${stepsHtml}
             </div>
             ${pkg.statusUpdatedAt ? `<p class="card-date">Última actualización: ${new Date(pkg.statusUpdatedAt).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })}</p>` : ""}
-            ${pkg.notes ? `<p class="card-notes">📝 ${pkg.notes}</p>` : ""}
           </div>
         `;
       }
@@ -253,12 +344,21 @@
       function toggleSettings() {
         const modal = document.getElementById("settingsModal");
         const item = document.getElementById("settingsNavItem");
+        const items = document.querySelectorAll("#bottomNav .bottom-nav-item");
         if (modal.classList.contains("hidden")) {
+          // Deactivate all others, activate settings
+          items.forEach(i => { if (i !== item) i.classList.remove("active"); });
           modal.classList.remove("hidden");
           item.classList.add("active");
         } else {
           modal.classList.add("hidden");
           item.classList.remove("active");
+          // Re-activate the appropriate tab
+          if (currentClientView === "entregados") {
+            document.getElementById("entregadosNavItem").classList.add("active");
+          } else {
+            document.getElementById("rastreoNavItem").classList.add("active");
+          }
         }
       }
       function closeSettings() {

@@ -21,7 +21,7 @@
           <input type="password" id="password" placeholder="••••••••" />
         </div>
 
-        <button id="loginBtn" onclick="doLogin()" class="btn-primary login-btn">Ingresar</button>
+        <button id="loginBtn" onclick="doLogin()" class="btn-primary login-btn" disabled>Ingresar</button>
         <p id="loginError" class="error-msg hidden"></p>
 
         <div class="login-links">
@@ -51,17 +51,20 @@
         }
       }
 
+      // Enable/disable login button based on fields
+      function checkLoginFields() {
+        const u = document.getElementById("username").value.trim();
+        const p = document.getElementById("password").value;
+        document.getElementById("loginBtn").disabled = !(u && p);
+      }
+      document.getElementById("username").addEventListener("input", checkLoginFields);
+      document.getElementById("password").addEventListener("input", checkLoginFields);
+
       async function doLogin() {
         const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value;
         const errorEl = document.getElementById("loginError");
         errorEl.classList.add("hidden");
-
-        if (!username || !password) {
-          errorEl.textContent = "Por favor ingresá usuario y contraseña.";
-          errorEl.classList.remove("hidden");
-          return;
-        }
 
         const result = await App.login(username, password);
         if (result.success) {
@@ -81,12 +84,12 @@
         alert("Por favor contactá al administrador para restablecer tu contraseña.");
       }
 
-      // Enter key on password
+      // Enter key support
       document.getElementById("password").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") doLogin();
+        if (e.key === "Enter" && !document.getElementById("loginBtn").disabled) doLogin();
       });
       document.getElementById("username").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") doLogin();
+        if (e.key === "Enter" && !document.getElementById("loginBtn").disabled) doLogin();
       });
     </script>
   </body>

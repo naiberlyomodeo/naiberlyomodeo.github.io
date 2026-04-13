@@ -343,6 +343,17 @@ button {
   background: var(--primary-hover);
 }
 
+.btn-primary:disabled,
+#loginBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary:disabled:hover,
+#loginBtn:disabled:hover {
+  background: var(--primary);
+}
+
 .btn-secondary {
   background: var(--border);
   color: var(--text);
@@ -420,11 +431,10 @@ button {
 }
 
 .card-notes {
-  margin-top: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
   font-size: 0.9rem;
   color: var(--text-muted);
-  border-top: 1px solid var(--border);
-  padding-top: 0.75rem;
 }
 
 /* ---- Progress Steps ---- */
@@ -724,17 +734,14 @@ td.empty {
 .catalog-toolbar .search-row {
   flex: 1;
   min-width: 200px;
-}
-
-.toolbar-right {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
 
-.toolbar-right select {
-  width: auto;
-  min-width: 160px;
+.catalog-toolbar .search-row input {
+  flex: 1;
+  min-width: 0;
 }
 
 .view-toggle {
@@ -857,6 +864,15 @@ td.empty {
 
 .product-meta {
   margin-bottom: 0.3rem;
+}
+
+.product-meta-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border);
 }
 
 .product-notes {
@@ -1436,13 +1452,8 @@ td.empty {
     padding-left: 0.5rem;
   }
 
-  .catalog-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .toolbar-right {
-    justify-content: space-between;
+  .catalog-toolbar .search-row {
+    flex-direction: row;
   }
 
   .product-grid {
