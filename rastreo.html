@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <nav class="top-nav" id="topNav">
-      <a href="rastreo.html" class="active">Rastreo</a>
+    <nav class="top-nav" id="topNav" aria-label="Navegación principal">
+      <a href="rastreo.html" class="active" id="topRastreoLink">Rastreo</a>
+      <a href="#" id="topEntregadosLink" class="hidden" onclick="showEntregadosDesktop(event)">Entregados</a>
       <a href="catalogo.html">Catálogo</a>
       <span id="navRight" class="nav-right">
         <span id="navUser" class="nav-user"></span>
@@ -69,7 +70,7 @@
     </div>
 
     <!-- Bottom Navigation (mobile) -->
-    <nav class="bottom-nav" id="bottomNav">
+    <nav class="bottom-nav" id="bottomNav" aria-label="Navegación principal">
       <a href="rastreo.html" class="bottom-nav-item active" id="rastreoNavItem">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Rastreo</span>
@@ -93,7 +94,7 @@
     </nav>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="settings-overlay hidden" onclick="if(event.target===this)closeSettings()">
+    <div id="settingsModal" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-label="Ajustes" onclick="if(event.target===this)closeSettings()">
       <div class="settings-sheet">
         <h3>Ajustes</h3>
         <div class="theme-toggle-row">
@@ -130,9 +131,10 @@
         document.getElementById("bottomAuthIcon").innerHTML = '<path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>';
       }
 
-      // Show Entregados tab for logged-in clients
+      // Show Entregados tab for logged-in clients (mobile + desktop)
       if (isClient) {
         document.getElementById("entregadosNavItem").classList.remove("hidden");
+        document.getElementById("topEntregadosLink").classList.remove("hidden");
       }
 
       // Client mode: auto-load packages, hide search
@@ -140,7 +142,12 @@
         document.getElementById("searchSection").classList.add("hidden");
         const firstName = user.name.replace(/\s*\(.*\)/, "");
         document.getElementById("pageSubtitle").textContent = `Hola ${firstName}, estos son tus paquetes`;
-        loadClientPackages();
+        loadClientPackages().then(() => {
+          // If navigated here with #entregados (e.g. from catalogo), show that view
+          if (window.location.hash === "#entregados") {
+            showEntregados();
+          }
+        });
       }
 
       function sortPackages(packages) {
@@ -148,7 +155,7 @@
         return packages.sort((a, b) => {
           const idxA = stages.indexOf(a.status);
           const idxB = stages.indexOf(b.status);
-          if (idxA !== idxB) return idxA - idxB; // Earlier stages first, Entregado last
+          if (idxA !== idxB) return idxB - idxA; // Most advanced status first
           // Same status: most recently updated first
           const dateA = a.statusUpdatedAt ? new Date(a.statusUpdatedAt).getTime() : 0;
           const dateB = b.statusUpdatedAt ? new Date(b.statusUpdatedAt).getTime() : 0;
@@ -179,12 +186,23 @@
         window._entregados = delivered;
       }
 
+      function syncNavActive(view) {
+        // Bottom nav
+        document.querySelectorAll("#bottomNav .bottom-nav-item").forEach(i => i.classList.remove("active"));
+        if (view === "entregados") {
+          document.getElementById("entregadosNavItem").classList.add("active");
+        } else {
+          document.getElementById("rastreoNavItem").classList.add("active");
+        }
+        // Desktop top nav
+        document.getElementById("topRastreoLink").classList.toggle("active", view === "rastreo");
+        document.getElementById("topEntregadosLink").classList.toggle("active", view === "entregados");
+      }
+
       function showEntregados() {
         currentClientView = "entregados";
         closeSettings();
-        // Update bottom nav active states
-        document.querySelectorAll("#bottomNav .bottom-nav-item").forEach(i => i.classList.remove("active"));
-        document.getElementById("entregadosNavItem").classList.add("active");
+        syncNavActive("entregados");
 
         // Hide rastreo sections
         document.getElementById("results").classList.add("hidden");
@@ -201,7 +219,7 @@
         noEnt.classList.add("hidden");
 
         const delivered = window._entregados || [];
-        document.getElementById("pageSubtitle").textContent = "Paquetes entregados";
+        document.getElementById("pageSubtitle").textContent = "Historial de paquetes que ya fueron entregados";
 
         if (delivered.length === 0) {
           noEnt.classList.remove("hidden");
@@ -213,22 +231,28 @@
         section.classList.remove("hidden");
       }
 
-      // Handle clicking back to Rastreo tab
-      document.getElementById("rastreoNavItem").addEventListener("click", function(e) {
+      function showEntregadosDesktop(e) {
+        e.preventDefault();
+        showEntregados();
+      }
+
+      // Handle clicking back to Rastreo tab (mobile bottom nav or desktop top nav)
+      function switchToRastreo(e) {
         if (isClient && currentClientView === "entregados") {
           e.preventDefault();
           currentClientView = "rastreo";
           closeSettings();
-          document.querySelectorAll("#bottomNav .bottom-nav-item").forEach(i => i.classList.remove("active"));
-          document.getElementById("rastreoNavItem").classList.add("active");
+          syncNavActive("rastreo");
+          history.replaceState(null, "", window.location.pathname);
           document.getElementById("entregadosSection").classList.add("hidden");
           document.getElementById("noEntregados").classList.add("hidden");
           const firstName = user.name.replace(/\s*\(.*\)/, "");
           document.getElementById("pageSubtitle").textContent = `Hola ${firstName}, estos son tus paquetes`;
-          // Re-show active packages
           loadClientPackages();
         }
-      });
+      }
+      document.getElementById("rastreoNavItem").addEventListener("click", switchToRastreo);
+      document.getElementById("topRastreoLink").addEventListener("click", switchToRastreo);
 
       // Guest mode: debounced search
       let searchTimer = null;
@@ -346,25 +370,22 @@
         const item = document.getElementById("settingsNavItem");
         const items = document.querySelectorAll("#bottomNav .bottom-nav-item");
         if (modal.classList.contains("hidden")) {
-          // Deactivate all others, activate settings
           items.forEach(i => { if (i !== item) i.classList.remove("active"); });
           modal.classList.remove("hidden");
           item.classList.add("active");
         } else {
           modal.classList.add("hidden");
           item.classList.remove("active");
-          // Re-activate the appropriate tab
-          if (currentClientView === "entregados") {
-            document.getElementById("entregadosNavItem").classList.add("active");
-          } else {
-            document.getElementById("rastreoNavItem").classList.add("active");
-          }
+          syncNavActive(currentClientView);
         }
       }
       function closeSettings() {
         document.getElementById("settingsModal").classList.add("hidden");
         document.getElementById("settingsNavItem").classList.remove("active");
       }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSettings();
+      });
       initTheme();
     </script>
   </body>

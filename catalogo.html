@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <nav class="top-nav" id="topNav">
+    <nav class="top-nav" id="topNav" aria-label="Navegación principal">
       <a href="rastreo.html">Rastreo</a>
+      <a href="rastreo.html#entregados" id="topEntregadosLink" class="hidden">Entregados</a>
       <a href="catalogo.html" class="active">Catálogo</a>
       <span id="navRight" class="nav-right">
         <span id="navUser" class="nav-user"></span>
@@ -36,17 +37,17 @@
               placeholder="Buscar por nombre o código..."
               oninput="filterCatalog()"
             />
-            <div class="view-toggle">
-              <button id="gridBtn" class="view-btn active" onclick="setView('grid')" title="Vista cuadrícula">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+            <div class="view-toggle" role="group" aria-label="Cambiar vista">
+              <button id="gridBtn" class="view-btn active" onclick="setView('grid')" title="Vista cuadrícula" aria-label="Vista cuadrícula" aria-pressed="true">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
                   <rect x="0" y="0" width="8" height="8" rx="1"/>
                   <rect x="10" y="0" width="8" height="8" rx="1"/>
                   <rect x="0" y="10" width="8" height="8" rx="1"/>
                   <rect x="10" y="10" width="8" height="8" rx="1"/>
                 </svg>
               </button>
-              <button id="listBtn" class="view-btn" onclick="setView('list')" title="Vista lista">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+              <button id="listBtn" class="view-btn" onclick="setView('list')" title="Vista lista" aria-label="Vista lista" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
                   <rect x="0" y="1" width="18" height="4" rx="1"/>
                   <rect x="0" y="7" width="18" height="4" rx="1"/>
                   <rect x="0" y="13" width="18" height="4" rx="1"/>
@@ -71,20 +72,24 @@
     </div>
 
     <!-- Product Detail Modal -->
-    <div id="productDetail" class="detail-overlay hidden" onclick="if(event.target===this)closeDetail()">
+    <div id="productDetail" class="detail-overlay hidden" role="dialog" aria-modal="true" aria-label="Detalle del producto" onclick="if(event.target===this)closeDetail()">
       <div class="detail-box">
-        <button class="detail-close" onclick="closeDetail()">&times;</button>
+        <button class="detail-close" onclick="closeDetail()" aria-label="Cerrar">&times;</button>
         <div id="detailContent"></div>
       </div>
     </div>
 
     <!-- Bottom Navigation (mobile) -->
-    <nav class="bottom-nav" id="bottomNav">
+    <nav class="bottom-nav" id="bottomNav" aria-label="Navegación principal">
       <a href="rastreo.html" class="bottom-nav-item">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Rastreo</span>
       </a>
-      <a href="catalogo.html" class="bottom-nav-item active">
+      <a href="rastreo.html#entregados" class="bottom-nav-item hidden" id="entregadosNavItem">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Entregados</span>
+      </a>
+      <a href="catalogo.html" class="bottom-nav-item active" id="catalogoNavItem">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span>Catálogo</span>
       </a>
@@ -99,7 +104,7 @@
     </nav>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="settings-overlay hidden" onclick="if(event.target===this)closeSettings()">
+    <div id="settingsModal" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-label="Ajustes" onclick="if(event.target===this)closeSettings()">
       <div class="settings-sheet">
         <h3>Ajustes</h3>
         <div class="theme-toggle-row">
@@ -131,6 +136,12 @@
         authLink.onclick = null;
         document.getElementById("bottomAuthLabel").textContent = "Ingresar";
         document.getElementById("bottomAuthIcon").innerHTML = '<path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>';
+      }
+
+      // Show Entregados tab for logged-in clients (desktop + mobile)
+      if (user && user.role === "client") {
+        document.getElementById("topEntregadosLink").classList.remove("hidden");
+        document.getElementById("entregadosNavItem").classList.remove("hidden");
       }
 
       function doLogout() {
@@ -188,15 +199,13 @@
         } else {
           modal.classList.add("hidden");
           item.classList.remove("active");
-          // Re-activate Catálogo since we're on that page
-          document.querySelectorAll("#bottomNav .bottom-nav-item")[1].classList.add("active");
+          document.getElementById("catalogoNavItem").classList.add("active");
         }
       }
       function closeSettings() {
         document.getElementById("settingsModal").classList.add("hidden");
         document.getElementById("settingsNavItem").classList.remove("active");
-        // Re-activate Catálogo
-        document.querySelectorAll("#bottomNav .bottom-nav-item")[1].classList.add("active");
+        document.getElementById("catalogoNavItem").classList.add("active");
       }
       initTheme();
 
@@ -300,15 +309,20 @@
         document.body.style.overflow = "";
       }
 
-      // Close on Escape
+      // Close modals on Escape
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeDetail();
+        if (e.key === "Escape") {
+          closeDetail();
+          closeSettings();
+        }
       });
 
       function setView(view) {
         currentView = view;
         document.getElementById("gridBtn").classList.toggle("active", view === "grid");
         document.getElementById("listBtn").classList.toggle("active", view === "list");
+        document.getElementById("gridBtn").setAttribute("aria-pressed", view === "grid");
+        document.getElementById("listBtn").setAttribute("aria-pressed", view === "list");
         filterCatalog();
       }
 

@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <nav class="top-nav hidden" id="adminNav">
-      <span class="nav-right" style="position:static">
+    <nav class="top-nav top-nav-right hidden" id="adminNav" aria-label="Navegación principal">
+      <span class="nav-right">
         <span id="navUser" class="nav-user"></span>
         <button class="nav-icon-btn" id="navThemeBtn" onclick="toggleThemeDesktop()" title="Cambiar tema">
           <svg id="navThemeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
@@ -20,6 +20,7 @@
     <div class="container has-bottom-nav">
       <header>
         <h1>Administración</h1>
+        <p class="subtitle">Gestioná paquetes, productos y clientes</p>
       </header>
 
       <!-- Admin Dashboard -->
@@ -83,33 +84,19 @@
           <!-- Bulk Update -->
           <div id="bulkSection" class="hidden">
             <div class="bulk-bar">
+              <label class="bulk-select-all">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" />
+                Todos
+              </label>
               <span id="bulkCount">0 seleccionados</span>
               <select id="bulkStatus"></select>
-              <button onclick="bulkUpdate()" class="btn-primary">Actualizar seleccionados</button>
+              <button onclick="bulkUpdate()" class="btn-primary">Actualizar</button>
               <button onclick="cancelBulk()" class="btn-secondary">Cancelar</button>
             </div>
           </div>
 
-          <!-- Package Table -->
-          <div class="table-wrapper">
-            <table id="packageTable">
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /></th>
-                  <th style="white-space:nowrap">Tracking Number</th>
-                  <th>Cliente</th>
-                  <th>Cédula</th>
-                  <th>Descripción</th>
-                  <th>Estado</th>
-                  <th>Actualizado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tableBody"></tbody>
-            </table>
-          </div>
-          <!-- Mobile cards -->
-          <div class="admin-card" id="packageCards"></div>
+          <!-- Package Cards -->
+          <div id="packageCards" class="admin-cards"></div>
         </div>
 
         <!-- ============================================ -->
@@ -174,25 +161,8 @@
             </div>
           </div>
 
-          <!-- Product Table -->
-          <div class="table-wrapper">
-            <table id="productTable">
-              <thead>
-                <tr>
-                  <th>Imagen</th>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Precio</th>
-                  <th>Bodega</th>
-                  <th>Notas</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="prodTableBody"></tbody>
-            </table>
-          </div>
-          <!-- Mobile cards -->
-          <div class="admin-card" id="productCards"></div>
+          <!-- Product Cards -->
+          <div id="productCards" class="admin-cards"></div>
         </div>
 
         <!-- ============================================ -->
@@ -247,32 +217,15 @@
             </div>
           </div>
 
-          <!-- Client Table -->
-          <div class="table-wrapper">
-            <table id="clientTable">
-              <thead>
-                <tr>
-                  <th>Cédula</th>
-                  <th>Nombre</th>
-                  <th>Teléfono</th>
-                  <th>Correo</th>
-                  <th>Dirección</th>
-                  <th>Notas</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="clientTableBody"></tbody>
-            </table>
-          </div>
-          <!-- Mobile cards -->
-          <div class="admin-card" id="clientCards"></div>
+          <!-- Client Cards -->
+          <div id="clientCards" class="admin-cards"></div>
         </div>
 
       </section>
     </div>
 
     <!-- Confirm Modal -->
-    <div id="confirmModal" class="modal-overlay hidden">
+    <div id="confirmModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirmMsg">
       <div class="modal-box">
         <p id="confirmMsg">¿Estás segura?</p>
         <div class="modal-actions">
@@ -283,10 +236,10 @@
     </div>
 
     <!-- FAB (mobile) -->
-    <button class="fab" id="adminFab" onclick="fabAdd()">+</button>
+    <button class="fab" id="adminFab" onclick="fabAdd()" aria-label="Agregar nuevo">+</button>
 
     <!-- Bottom Navigation (mobile admin) -->
-    <nav class="bottom-nav" id="adminBottomNav">
+    <nav class="bottom-nav" id="adminBottomNav" aria-label="Navegación principal">
       <a href="#" class="bottom-nav-item active" onclick="switchTabBottom('packages', this); return false;">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Paquetes</span>
@@ -310,7 +263,7 @@
     </nav>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="settings-overlay hidden" onclick="if(event.target===this)closeSettings()">
+    <div id="settingsModal" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-label="Ajustes" onclick="if(event.target===this)closeSettings()">
       <div class="settings-sheet">
         <h3>Ajustes</h3>
         <div class="theme-toggle-row">
@@ -334,9 +287,13 @@
       // ---- Tab Switching ----
       function switchTab(tab) {
         document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-        document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
         document.getElementById(`tab-${tab}`).classList.remove("hidden");
-        event.target.classList.add("active");
+
+        // Sync desktop tabs
+        const tabMap = { packages: 0, catalog: 1, clients: 2 };
+        const btns = document.querySelectorAll(".tab-btn");
+        btns.forEach(b => b.classList.remove("active"));
+        if (btns[tabMap[tab]]) btns[tabMap[tab]].classList.add("active");
 
         // Sync bottom nav active state
         syncBottomNav(tab);
@@ -346,20 +303,7 @@
       }
 
       function switchTabBottom(tab, el) {
-        document.querySelectorAll(".tab-content").forEach(e => e.classList.add("hidden"));
-        document.querySelectorAll(".tab-btn").forEach(e => e.classList.remove("active"));
-        document.getElementById(`tab-${tab}`).classList.remove("hidden");
-
-        // Sync desktop tabs
-        const tabMap = { packages: 0, catalog: 1, clients: 2 };
-        const btns = document.querySelectorAll(".tab-btn");
-        if (btns[tabMap[tab]]) btns[tabMap[tab]].classList.add("active");
-
-        // Sync bottom nav
-        syncBottomNav(tab);
-
-        if (tab === "catalog") loadProducts();
-        if (tab === "clients") loadClients();
+        switchTab(tab);
       }
 
       function syncBottomNav(tab) {
@@ -399,6 +343,8 @@
         const saved = localStorage.getItem("rastreo_theme");
         if (saved === "light") {
           document.documentElement.setAttribute("data-theme", "light");
+          const tog = document.getElementById("themeToggle");
+          if (tog) tog.checked = true;
         }
         updateThemeIcon();
       }
@@ -413,7 +359,10 @@
         updateThemeIcon();
       }
       function toggleThemeDesktop() {
-        applyTheme(!isLightMode());
+        const goLight = !isLightMode();
+        applyTheme(goLight);
+        const tog = document.getElementById("themeToggle");
+        if (tog) tog.checked = goLight;
       }
       function updateThemeIcon() {
         const icon = document.getElementById("navThemeIcon");
@@ -448,6 +397,12 @@
         const item = document.getElementById("adminSettingsNavItem");
         if (item) item.classList.remove("active");
       }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeSettings();
+          closeModal();
+        }
+      });
       initTheme();
 
       // ---- Auth ----
@@ -475,19 +430,19 @@
 
       async function loadPackages() {
         allPackages = await App.getAllPackages();
-        renderPackageTable(allPackages);
+        renderPackageCards(allPackages);
       }
 
       function filterPackages() {
         const q = document.getElementById("adminSearch").value.toLowerCase().trim();
-        if (!q) return renderPackageTable(allPackages);
+        if (!q) return renderPackageCards(allPackages);
         const filtered = allPackages.filter(
           p =>
             p.clientId.toLowerCase().includes(q) ||
             p.trackingNumber.toLowerCase().includes(q) ||
             p.clientName.toLowerCase().includes(q)
         );
-        renderPackageTable(filtered);
+        renderPackageCards(filtered);
       }
 
       function formatDate(isoString) {
@@ -497,54 +452,40 @@
           + " " + d.toLocaleTimeString("es-CR", { hour: "2-digit", minute: "2-digit" });
       }
 
-      function renderPackageTable(packages) {
-        const tbody = document.getElementById("tableBody");
-        const cards = document.getElementById("packageCards");
+      function renderPackageCards(packages) {
+        const container = document.getElementById("packageCards");
         if (packages.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay paquetes</td></tr>';
-          cards.innerHTML = '<p class="no-results">No hay paquetes</p>';
+          container.innerHTML = '<p class="no-results">No hay paquetes</p>';
           return;
         }
-        tbody.innerHTML = packages
-          .map(
-            pkg => `
-          <tr>
-            <td><input type="checkbox" class="pkg-check" value="${pkg.id}" onchange="updateBulkCount()" /></td>
-            <td><span class="tracking-cell"><strong>${pkg.trackingNumber}</strong><button class="btn-copy" onclick="copyTracking('${pkg.trackingNumber}', this)" title="Copiar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></span></td>
-            <td>${pkg.clientName}</td>
-            <td>${pkg.clientId}</td>
-            <td>${pkg.description}</td>
-            <td><span class="status-badge status-${App.STAGES.indexOf(pkg.status)}">${pkg.status}</span></td>
-            <td class="date-cell">${formatDate(pkg.statusUpdatedAt)}</td>
-            <td class="actions">
-              <button onclick="editPackage('${pkg.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button onclick="deletePackage('${pkg.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-            </td>
-          </tr>
-        `
-          )
-          .join("");
-
-        // Mobile cards
-        cards.innerHTML = '<div class="admin-cards">' + packages.map(pkg => `
+        container.innerHTML = packages.map(pkg => `
           <div class="admin-card-item">
             <div class="admin-card-header">
-              <div>
-                <div class="admin-card-title">${pkg.trackingNumber}</div>
-                <div style="font-size:0.8125rem;color:var(--text-muted)">${pkg.clientName} · ${pkg.clientId}</div>
+              <label class="admin-card-check">
+                <input type="checkbox" class="pkg-check" value="${pkg.id}" onchange="updateBulkCount()" />
+              </label>
+              <div class="admin-card-header-info">
+                <div class="admin-card-title">
+                  ${pkg.trackingNumber}
+                  <button class="btn-copy" onclick="copyTracking('${pkg.trackingNumber}', this)" title="Copiar" aria-label="Copiar número de rastreo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+                </div>
+                <div class="admin-card-subtitle">${pkg.clientName} · ${pkg.clientId}</div>
               </div>
               <div class="admin-card-actions">
-                <button onclick="editPackage('${pkg.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button onclick="deletePackage('${pkg.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <button onclick="editPackage('${pkg.id}')" class="btn-icon btn-sm" title="Editar" aria-label="Editar paquete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button onclick="deletePackage('${pkg.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar" aria-label="Eliminar paquete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div>
             </div>
-            <div class="admin-card-row"><span class="admin-card-label">Descripción</span><span class="admin-card-value">${pkg.description}</span></div>
+            <div class="admin-card-body">
+              <div class="admin-card-row"><span class="admin-card-label">Descripción</span><span class="admin-card-value">${pkg.description}</span></div>
+              ${pkg.notes ? `<div class="admin-card-row"><span class="admin-card-label">Notas</span><span class="admin-card-value">${pkg.notes}</span></div>` : ""}
+            </div>
             <div class="admin-card-footer">
               <span class="status-badge status-${App.STAGES.indexOf(pkg.status)}">${pkg.status}</span>
               <span class="date-cell">${formatDate(pkg.statusUpdatedAt)}</span>
             </div>
           </div>
-        `).join("") + '</div>';
+        `).join("");
       }
 
       function showAddPackageForm() {
@@ -557,15 +498,14 @@
         document.getElementById("pkgNotes").value = "";
         document.getElementById("pkgSaveBtn").disabled = true;
         document.getElementById("packageForm").classList.remove("hidden");
-        // Hide list underneath
-        document.querySelector("#tab-packages .table-wrapper").classList.add("hidden");
         document.getElementById("packageCards").classList.add("hidden");
+        document.querySelector("#tab-packages .admin-toolbar").classList.add("hidden");
       }
 
       function hidePackageForm() {
         document.getElementById("packageForm").classList.add("hidden");
-        document.querySelector("#tab-packages .table-wrapper").classList.remove("hidden");
         document.getElementById("packageCards").classList.remove("hidden");
+        document.querySelector("#tab-packages .admin-toolbar").classList.remove("hidden");
       }
 
       function checkPkgFields() {
@@ -605,10 +545,10 @@
         document.getElementById("pkgDescription").value = pkg.description;
         document.getElementById("pkgStatus").value = pkg.status;
         document.getElementById("pkgNotes").value = pkg.notes || "";
-        checkPkgFields();
+        document.getElementById("pkgSaveBtn").disabled = true;
         document.getElementById("packageForm").classList.remove("hidden");
-        document.querySelector("#tab-packages .table-wrapper").classList.add("hidden");
         document.getElementById("packageCards").classList.add("hidden");
+        document.querySelector("#tab-packages .admin-toolbar").classList.add("hidden");
       }
 
       function deletePackage(id) {
@@ -654,67 +594,48 @@
       // ---- Catalog / Products ----
       async function loadProducts() {
         allProducts = await App.getAllProducts();
-        renderProductTable(allProducts);
+        renderProductCards(allProducts);
       }
 
       function filterProducts() {
         const q = document.getElementById("catalogAdminSearch").value.toLowerCase().trim();
-        if (!q) return renderProductTable(allProducts);
+        if (!q) return renderProductCards(allProducts);
         const filtered = allProducts.filter(
           p => p.name.toLowerCase().includes(q) ||
             (p.productCode && p.productCode.toLowerCase().includes(q)) ||
             (p.notes && p.notes.toLowerCase().includes(q))
         );
-        renderProductTable(filtered);
+        renderProductCards(filtered);
       }
 
-      function renderProductTable(products) {
-        const tbody = document.getElementById("prodTableBody");
-        const cards = document.getElementById("productCards");
+      function renderProductCards(products) {
+        const container = document.getElementById("productCards");
         if (products.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay productos</td></tr>';
-          cards.innerHTML = '<p class="no-results">No hay productos</p>';
+          container.innerHTML = '<p class="no-results">No hay productos</p>';
           return;
         }
-        tbody.innerHTML = products
-          .map(
-            p => `
-          <tr>
-            <td>${p.image ? `<img src="${p.image}" class="table-thumb" alt="${p.name}" />` : '<div class="table-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>'}</td>
-            <td>${p.productCode ? `<span class="tracking-cell"><strong>${p.productCode}</strong><button class="btn-copy" onclick="event.stopPropagation();copyTracking('${p.productCode}', this)" title="Copiar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></span>` : "—"}</td>
-            <td>${p.name}</td>
-            <td>${p.price ? (p.currency === "USD" ? "$" : "₡") + Number(p.price).toLocaleString("es-CR") : "—"}</td>
-            <td style="white-space:nowrap">${p.location || "—"}</td>
-            <td>${p.notes || "—"}</td>
-            <td class="actions">
-              <button onclick="editProduct('${p.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button onclick="deleteProduct('${p.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-            </td>
-          </tr>
-        `
-          )
-          .join("");
-
-        // Mobile cards
-        cards.innerHTML = '<div class="admin-cards">' + products.map(p => {
+        container.innerHTML = products.map(p => {
           const priceStr = p.price ? (p.currency === "USD" ? "$" : "₡") + Number(p.price).toLocaleString("es-CR") : "—";
           return `
           <div class="admin-card-item">
             <div class="admin-card-header">
-              <div>
-                <div style="font-size:0.75rem;color:var(--text-muted);font-family:monospace">${p.productCode || ""}</div>
+              <div class="admin-card-header-info">
                 <div class="admin-card-title">${p.name}</div>
+                <div class="admin-card-subtitle">${p.productCode || ""}</div>
               </div>
               <div class="admin-card-actions">
-                <button onclick="editProduct('${p.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button onclick="deleteProduct('${p.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                ${p.productCode ? `<button class="btn-copy" onclick="event.stopPropagation();copyTracking('${p.productCode}', this)" title="Copiar código" aria-label="Copiar código de producto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>` : ""}
+                <button onclick="editProduct('${p.id}')" class="btn-icon btn-sm" title="Editar" aria-label="Editar producto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button onclick="deleteProduct('${p.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar" aria-label="Eliminar producto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div>
             </div>
-            <div class="admin-card-row"><span class="admin-card-label">Precio</span><span class="admin-card-value" style="font-weight:700;color:var(--primary)">${priceStr}</span></div>
-            ${p.location ? `<div class="admin-card-row"><span class="admin-card-label">Bodega</span><span class="admin-card-value">${p.location}</span></div>` : ""}
-            ${p.notes ? `<div class="admin-card-row"><span class="admin-card-label">Notas</span><span class="admin-card-value">${p.notes}</span></div>` : ""}
+            <div class="admin-card-body">
+              <div class="admin-card-row"><span class="admin-card-label">Precio</span><span class="admin-card-value admin-card-price">${priceStr}</span></div>
+              ${p.location ? `<div class="admin-card-row"><span class="admin-card-label">Bodega</span><span class="admin-card-value">${p.location}</span></div>` : ""}
+              ${p.notes ? `<div class="admin-card-row"><span class="admin-card-label">Notas</span><span class="admin-card-value">${p.notes}</span></div>` : ""}
+            </div>
           </div>`;
-        }).join("") + '</div>';
+        }).join("");
       }
 
       function showAddProductForm() {
@@ -729,15 +650,14 @@
         document.getElementById("prodSaveBtn").disabled = true;
         document.getElementById("imagePreview").classList.add("hidden");
         document.getElementById("productForm").classList.remove("hidden");
-        // Hide list underneath
-        document.querySelector("#tab-catalog .table-wrapper").classList.add("hidden");
         document.getElementById("productCards").classList.add("hidden");
+        document.querySelector("#tab-catalog .admin-toolbar").classList.add("hidden");
       }
 
       function hideProductForm() {
         document.getElementById("productForm").classList.add("hidden");
-        document.querySelector("#tab-catalog .table-wrapper").classList.remove("hidden");
         document.getElementById("productCards").classList.remove("hidden");
+        document.querySelector("#tab-catalog .admin-toolbar").classList.remove("hidden");
       }
 
       function previewImage(e) {
@@ -824,10 +744,10 @@
         } else {
           document.getElementById("imagePreview").classList.add("hidden");
         }
-        checkProdFields();
+        document.getElementById("prodSaveBtn").disabled = true;
         document.getElementById("productForm").classList.remove("hidden");
-        document.querySelector("#tab-catalog .table-wrapper").classList.add("hidden");
         document.getElementById("productCards").classList.add("hidden");
+        document.querySelector("#tab-catalog .admin-toolbar").classList.add("hidden");
       }
 
       function deleteProduct(id) {
@@ -842,67 +762,50 @@
 
       async function loadClients() {
         allClients = await App.getAllClients();
-        renderClientTable(allClients);
+        renderClientCards(allClients);
       }
 
       function filterClients() {
         const q = document.getElementById("clientAdminSearch").value.toLowerCase().trim();
-        if (!q) return renderClientTable(allClients);
+        if (!q) return renderClientCards(allClients);
         const filtered = allClients.filter(
           c =>
             c.name.toLowerCase().includes(q) ||
             c.cedula.toLowerCase().includes(q) ||
             (c.phone && c.phone.toLowerCase().includes(q))
         );
-        renderClientTable(filtered);
+        renderClientCards(filtered);
       }
 
-      function renderClientTable(clients) {
-        const tbody = document.getElementById("clientTableBody");
-        const cards = document.getElementById("clientCards");
+      function renderClientCards(clients) {
+        const container = document.getElementById("clientCards");
         if (clients.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="empty">No hay clientes</td></tr>';
-          cards.innerHTML = '<p class="no-results">No hay clientes</p>';
+          container.innerHTML = '<p class="no-results">No hay clientes</p>';
           return;
         }
-        tbody.innerHTML = clients
-          .map(
-            c => `
-          <tr>
-            <td><span class="tracking-cell"><strong>${c.cedula}</strong><button class="btn-copy" onclick="copyTracking('${c.cedula}', this)" title="Copiar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></span></td>
-            <td style="white-space:nowrap">${c.name}</td>
-            <td style="white-space:nowrap">${c.phone || "—"}</td>
-            <td style="white-space:nowrap">${c.email || "—"}</td>
-            <td>${c.address || "—"}</td>
-            <td>${c.notes || "—"}</td>
-            <td class="actions">
-              <button onclick="editClient('${c.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-              <button onclick="deleteClient('${c.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-            </td>
-          </tr>
-        `
-          )
-          .join("");
-
-        // Mobile cards
-        cards.innerHTML = '<div class="admin-cards">' + clients.map(c => `
+        container.innerHTML = clients.map(c => `
           <div class="admin-card-item">
             <div class="admin-card-header">
-              <div>
+              <div class="admin-card-header-info">
                 <div class="admin-card-title">${c.name}</div>
-                <div style="font-size:0.8125rem;color:var(--text-muted)">${c.cedula}</div>
+                <div class="admin-card-subtitle">
+                  ${c.cedula}
+                  <button class="btn-copy" onclick="copyTracking('${c.cedula}', this)" title="Copiar cédula" aria-label="Copiar cédula"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+                </div>
               </div>
               <div class="admin-card-actions">
-                <button onclick="editClient('${c.id}')" class="btn-icon btn-sm" title="Editar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button onclick="deleteClient('${c.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <button onclick="editClient('${c.id}')" class="btn-icon btn-sm" title="Editar" aria-label="Editar cliente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button onclick="deleteClient('${c.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar" aria-label="Eliminar cliente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div>
             </div>
-            ${c.phone ? `<div class="admin-card-row"><span class="admin-card-label">Teléfono</span><span class="admin-card-value">${c.phone}</span></div>` : ""}
-            ${c.email ? `<div class="admin-card-row"><span class="admin-card-label">Correo</span><span class="admin-card-value">${c.email}</span></div>` : ""}
-            ${c.address ? `<div class="admin-card-row"><span class="admin-card-label">Dirección</span><span class="admin-card-value">${c.address}</span></div>` : ""}
-            ${c.notes ? `<div class="admin-card-row"><span class="admin-card-label">Notas</span><span class="admin-card-value">${c.notes}</span></div>` : ""}
+            <div class="admin-card-body">
+              ${c.phone ? `<div class="admin-card-row"><span class="admin-card-label">Teléfono</span><span class="admin-card-value">${c.phone}</span></div>` : ""}
+              ${c.email ? `<div class="admin-card-row"><span class="admin-card-label">Correo</span><span class="admin-card-value">${c.email}</span></div>` : ""}
+              ${c.address ? `<div class="admin-card-row"><span class="admin-card-label">Dirección</span><span class="admin-card-value">${c.address}</span></div>` : ""}
+              ${c.notes ? `<div class="admin-card-row"><span class="admin-card-label">Notas</span><span class="admin-card-value">${c.notes}</span></div>` : ""}
+            </div>
           </div>
-        `).join("") + '</div>';
+        `).join("");
       }
 
       function showAddClientForm() {
@@ -916,15 +819,14 @@
         document.getElementById("cliNotes").value = "";
         document.getElementById("clientSaveBtn").disabled = true;
         document.getElementById("clientForm").classList.remove("hidden");
-        // Hide list underneath
-        document.querySelector("#tab-clients .table-wrapper").classList.add("hidden");
         document.getElementById("clientCards").classList.add("hidden");
+        document.querySelector("#tab-clients .admin-toolbar").classList.add("hidden");
       }
 
       function hideClientForm() {
         document.getElementById("clientForm").classList.add("hidden");
-        document.querySelector("#tab-clients .table-wrapper").classList.remove("hidden");
         document.getElementById("clientCards").classList.remove("hidden");
+        document.querySelector("#tab-clients .admin-toolbar").classList.remove("hidden");
       }
 
       function checkClientFields() {
@@ -966,10 +868,10 @@
         document.getElementById("cliEmail").value = c.email || "";
         document.getElementById("cliAddress").value = c.address || "";
         document.getElementById("cliNotes").value = c.notes || "";
-        checkClientFields();
+        document.getElementById("clientSaveBtn").disabled = true;
         document.getElementById("clientForm").classList.remove("hidden");
-        document.querySelector("#tab-clients .table-wrapper").classList.add("hidden");
         document.getElementById("clientCards").classList.add("hidden");
+        document.querySelector("#tab-clients .admin-toolbar").classList.add("hidden");
       }
 
       function deleteClient(id) {
