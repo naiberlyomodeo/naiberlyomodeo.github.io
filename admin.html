@@ -284,8 +284,24 @@
       let allProducts = [];
       let currentImageData = "";
 
+      // ---- Form lock: block navigation while add/edit form is open ----
+      let formOpen = false;
+
+      function lockNav() {
+        formOpen = true;
+        const fab = document.getElementById("adminFab");
+        if (fab) fab.classList.add("hidden");
+      }
+
+      function unlockNav() {
+        formOpen = false;
+        const fab = document.getElementById("adminFab");
+        if (fab) fab.classList.remove("hidden");
+      }
+
       // ---- Tab Switching ----
       function switchTab(tab) {
+        if (formOpen) return;
         document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
         document.getElementById(`tab-${tab}`).classList.remove("hidden");
 
@@ -317,6 +333,7 @@
       // ---- FAB ----
       let currentTab = "packages";
       function fabAdd() {
+        if (formOpen) return;
         if (currentTab === "packages") showAddPackageForm();
         else if (currentTab === "catalog") showAddProductForm();
         else if (currentTab === "clients") showAddClientForm();
@@ -375,18 +392,17 @@
       }
       function toggleTheme(isLight) { applyTheme(isLight); }
       function toggleSettings() {
+        if (formOpen) return;
         const modal = document.getElementById("settingsModal");
         const item = document.getElementById("adminSettingsNavItem");
         const items = document.querySelectorAll("#adminBottomNav .bottom-nav-item");
         if (modal.classList.contains("hidden")) {
-          // Deactivate all other bottom nav items, activate settings
           items.forEach(i => { if (i !== item) i.classList.remove("active"); });
           modal.classList.remove("hidden");
           item.classList.add("active");
         } else {
           modal.classList.add("hidden");
           item.classList.remove("active");
-          // Re-activate the current tab
           syncBottomNav(currentTab);
         }
       }
@@ -407,6 +423,7 @@
 
       // ---- Auth ----
       function logout() {
+        if (formOpen) return;
         App.logout();
         window.location.href = "index.html";
       }
@@ -500,12 +517,14 @@
         document.getElementById("packageForm").classList.remove("hidden");
         document.getElementById("packageCards").classList.add("hidden");
         document.querySelector("#tab-packages .admin-toolbar").classList.add("hidden");
+        lockNav();
       }
 
       function hidePackageForm() {
         document.getElementById("packageForm").classList.add("hidden");
         document.getElementById("packageCards").classList.remove("hidden");
         document.querySelector("#tab-packages .admin-toolbar").classList.remove("hidden");
+        unlockNav();
       }
 
       function checkPkgFields() {
@@ -549,6 +568,7 @@
         document.getElementById("packageForm").classList.remove("hidden");
         document.getElementById("packageCards").classList.add("hidden");
         document.querySelector("#tab-packages .admin-toolbar").classList.add("hidden");
+        lockNav();
       }
 
       function deletePackage(id) {
@@ -624,7 +644,6 @@
                 <div class="admin-card-subtitle">${p.productCode || ""}</div>
               </div>
               <div class="admin-card-actions">
-                ${p.productCode ? `<button class="btn-copy" onclick="event.stopPropagation();copyTracking('${p.productCode}', this)" title="Copiar código" aria-label="Copiar código de producto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>` : ""}
                 <button onclick="editProduct('${p.id}')" class="btn-icon btn-sm" title="Editar" aria-label="Editar producto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button onclick="deleteProduct('${p.id}')" class="btn-icon btn-sm btn-danger" title="Eliminar" aria-label="Eliminar producto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div>
@@ -652,12 +671,14 @@
         document.getElementById("productForm").classList.remove("hidden");
         document.getElementById("productCards").classList.add("hidden");
         document.querySelector("#tab-catalog .admin-toolbar").classList.add("hidden");
+        lockNav();
       }
 
       function hideProductForm() {
         document.getElementById("productForm").classList.add("hidden");
         document.getElementById("productCards").classList.remove("hidden");
         document.querySelector("#tab-catalog .admin-toolbar").classList.remove("hidden");
+        unlockNav();
       }
 
       function previewImage(e) {
@@ -748,6 +769,7 @@
         document.getElementById("productForm").classList.remove("hidden");
         document.getElementById("productCards").classList.add("hidden");
         document.querySelector("#tab-catalog .admin-toolbar").classList.add("hidden");
+        lockNav();
       }
 
       function deleteProduct(id) {
@@ -788,10 +810,7 @@
             <div class="admin-card-header">
               <div class="admin-card-header-info">
                 <div class="admin-card-title">${c.name}</div>
-                <div class="admin-card-subtitle">
-                  ${c.cedula}
-                  <button class="btn-copy" onclick="copyTracking('${c.cedula}', this)" title="Copiar cédula" aria-label="Copiar cédula"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
-                </div>
+                <div class="admin-card-subtitle">${c.cedula}</div>
               </div>
               <div class="admin-card-actions">
                 <button onclick="editClient('${c.id}')" class="btn-icon btn-sm" title="Editar" aria-label="Editar cliente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -821,12 +840,14 @@
         document.getElementById("clientForm").classList.remove("hidden");
         document.getElementById("clientCards").classList.add("hidden");
         document.querySelector("#tab-clients .admin-toolbar").classList.add("hidden");
+        lockNav();
       }
 
       function hideClientForm() {
         document.getElementById("clientForm").classList.add("hidden");
         document.getElementById("clientCards").classList.remove("hidden");
         document.querySelector("#tab-clients .admin-toolbar").classList.remove("hidden");
+        unlockNav();
       }
 
       function checkClientFields() {
@@ -872,6 +893,7 @@
         document.getElementById("clientForm").classList.remove("hidden");
         document.getElementById("clientCards").classList.add("hidden");
         document.querySelector("#tab-clients .admin-toolbar").classList.add("hidden");
+        lockNav();
       }
 
       function deleteClient(id) {
